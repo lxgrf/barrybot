@@ -5,8 +5,8 @@ from discord_slash import SlashCommand, SlashContext
 # from boto.s3.connection import S3Connection
 import os
 
-openai_api = os.environ['openai']
-discord_api = os.environ['discord']
+openai_api = str(os.environ['openai'])
+discord_api = str(os.environ['discord'])
 # s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
