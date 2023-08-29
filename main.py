@@ -2,12 +2,11 @@ import requests
 import json
 from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
-# from boto.s3.connection import S3Connection
 import os
 
 openai_api = str(os.environ['openai'])
 discord_api = str(os.environ['discord'])
-# s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
+
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
 
@@ -19,7 +18,7 @@ footer = "/scene | Request your own scene prompt! Prompts are AI-generated, so f
 async def scene(ctx: SlashContext, character1, character2, request=""):
     await ctx.defer()
     description = f"**First character**: `{character1}`\n**Second character**: `{character2}`"
-    prompt = f"Give a brief idea for a low-stakes encounter, for a roleplay scene between two D&D characters in the city of Silverymoon, in Faerûn. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. The characters have not interacted before this scene. Describe the setup only, the players will decide how it proceeds."
+    prompt = f"Give a brief idea for a low-stakes encounter, for a roleplay scene between two D&D characters in the city of Silverymoon, in Faerûn. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next."
     if request != "": 
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
