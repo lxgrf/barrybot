@@ -31,7 +31,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
     await ctx.send(embed=embed)
 
 @slash.slash(name="solo", description="Get a solo scene prompt! Describe the character involved specifying any relevant detail. Use natural language, and give as much or as little detail as you want.")
-async def scene(ctx: SlashContext, character1, detail=""):
+async def solo(ctx: SlashContext, character1, detail=""):
     await ctx.defer()
     description = f"**Solo character**: `{character1}`"
     prompt = f"Give a brief idea for a creative writing exercise from the perspective of {character1}, a D&D character in the city of Silverymoon, in Faerûn. Set up an emotionally resonant scene, and describe the inciting incident only, and not what happens next."
