@@ -6,6 +6,7 @@ import os
 
 openai_api = str(os.environ['openai'])
 discord_api = str(os.environ['discord'])
+model = "text-davinci-003"
 
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
@@ -23,7 +24,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
     # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
-    payload = {"model":"gpt-3.5-turbo","prompt":prompt,"temperature":0.8,"max_tokens":150}
+    payload = {"model":model,"prompt":prompt,"temperature":0.8,"max_tokens":150}
     payload = json.dumps(payload, indent = 4)
     r = requests.post(url=url, data=payload, headers=headers)
     description += f"\n\n{r.json()['choices'][0]['text']}"
@@ -40,7 +41,7 @@ async def solo(ctx: SlashContext, character, request=""):
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
     # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
-    payload = {"model":"gpt-3.5-turbo","prompt":prompt,"temperature":0.8,"max_tokens":150}
+    payload = {"model":model,"prompt":prompt,"temperature":0.8,"max_tokens":150}
     payload = json.dumps(payload, indent = 4)
     r = requests.post(url=url, data=payload, headers=headers)
     description += f"\n\n{r.json()['choices'][0]['text']}"
