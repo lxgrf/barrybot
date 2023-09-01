@@ -8,6 +8,7 @@ openai_api = str(os.environ['openai'])
 discord_api = str(os.environ['discord'])
 # model = "text-davinci-003"
 model = "gpt-3.5-turbo"
+max_tokens = 200
 
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
@@ -21,7 +22,7 @@ footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so 
 async def scene(ctx: SlashContext, character1, character2, request=""):
     await ctx.defer()
     description = f"**First character**: `{character1}`\n**Second character**: `{character2}`"
-    prompt = f"Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in the city of Silverymoon, in Faerûn. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next."
+    prompt = f"Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in the city of Silverymoon, in Faerûn. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than five bullet points."
     if request != "": 
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
@@ -34,7 +35,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
         "model":model,
         "messages":messages,
         "temperature":0.8,
-        "max_tokens":150}
+        "max_tokens":max_tokens}
     payload = json.dumps(payload, indent = 4)
     r = requests.post(url=url, data=payload, headers=headers)
     description += f"\n\n{r.json()['choices'][0]['message']['content']}"
@@ -46,7 +47,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
 async def solo(ctx: SlashContext, character, request=""):
     await ctx.defer()
     description = f"**Character**: `{character}`"
-    prompt = f"Give a concise bullet-point summary of an idea for an emotive and interesting character development scene for a D&D character in the city of Silverymoon, in Faerûn. The character is {character}. Avoid creating backstory for this character, as they are pre-existing. Describe the initial inciting incident only, and not what happens next."
+    prompt = f"Give a concise bullet-point summary of an idea for an emotive and interesting character development scene for a D&D character in the city of Silverymoon, in Faerûn. The character is {character}. Avoid creating backstory for this character, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than 5 bullet points."
     if request != "": 
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
@@ -59,7 +60,7 @@ async def solo(ctx: SlashContext, character, request=""):
         "model":model,
         "messages":messages,
         "temperature":0.8,
-        "max_tokens":150}
+        "max_tokens":max_tokens}
     # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
     # payload = {"model":model,"prompt":prompt,"temperature":0.8,"max_tokens":150}
     payload = json.dumps(payload, indent = 4)
