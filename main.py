@@ -9,6 +9,7 @@ discord_api = str(os.environ['discord'])
 # model = "text-davinci-003"
 model = "gpt-3.5-turbo"
 max_tokens = 200
+temperature = 1.2
 
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
@@ -34,7 +35,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
     payload = {
         "model":model,
         "messages":messages,
-        "temperature":0.8,
+        "temperature":temperature,
         "max_tokens":max_tokens}
     payload = json.dumps(payload, indent = 4)
     r = requests.post(url=url, data=payload, headers=headers)
@@ -59,7 +60,7 @@ async def solo(ctx: SlashContext, character, request=""):
     payload = {
         "model":model,
         "messages":messages,
-        "temperature":0.8,
+        "temperature":temperature,
         "max_tokens":max_tokens}
     # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
     # payload = {"model":model,"prompt":prompt,"temperature":0.8,"max_tokens":150}
