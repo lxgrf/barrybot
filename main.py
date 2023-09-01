@@ -22,11 +22,29 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
     if request != "": 
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
-    payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
+    # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
+    payload = {"model":"gpt-3.5-turbo","prompt":prompt,"temperature":0.8,"max_tokens":150}
     payload = json.dumps(payload, indent = 4)
     r = requests.post(url=url, data=payload, headers=headers)
     description += f"\n\n{r.json()['choices'][0]['text']}"
     embed = Embed(title=f"Here is your scene prompt!", description=description)
+    embed.set_footer(text=footer)
+    await ctx.send(embed=embed)
+
+@slash.slash(name="solo", description="Get a solo prompt! Describe the character involved specifying any relevant detail.")
+async def solo(ctx: SlashContext, character, request=""):
+    await ctx.defer()
+    description = f"**Character**: `{character}`"
+    prompt = f"Give a brief idea for an emotive and interesting character development scene for a D&D character in the city of Silverymoon, in Faerûn. The character is {character}. Avoid creating backstory for this character, as they are pre-existing. Describe the initial inciting incident only, and not what happens next."
+    if request != "": 
+        prompt += f" {request}."
+        description += f"\n**Request**: `{request}`"
+    # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
+    payload = {"model":"gpt-3.5-turbo","prompt":prompt,"temperature":0.8,"max_tokens":150}
+    payload = json.dumps(payload, indent = 4)
+    r = requests.post(url=url, data=payload, headers=headers)
+    description += f"\n\n{r.json()['choices'][0]['text']}"
+    embed = Embed(title=f"Here is your solo prompt!", description=description)
     embed.set_footer(text=footer)
     await ctx.send(embed=embed)
 
