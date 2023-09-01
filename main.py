@@ -17,7 +17,6 @@ slash = SlashCommand(bot, sync_commands=True)
 # url = 'https://api.openai.com/v1/completions'
 url = 'https://api.openai.com/v1/chat/completions'
 headers = {'content-type': 'application/json', "Authorization":f'Bearer {openai_api}'}
-footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
 
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
 async def scene(ctx: SlashContext, character1, character2, request=""):
@@ -41,6 +40,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
     r = requests.post(url=url, data=payload, headers=headers)
     description += f"\n\n{r.json()['choices'][0]['message']['content']}"
     embed = Embed(title=f"Here is your scene prompt!", description=description)
+    footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
     embed.set_footer(text=footer)
     await ctx.send(embed=embed)
 
@@ -68,6 +68,7 @@ async def solo(ctx: SlashContext, character, request=""):
     r = requests.post(url=url, data=payload, headers=headers)
     description += f"\n\n{r.json()['choices'][0]['message']['content']}"
     embed = Embed(title=f"Here is your solo prompt!", description=description)
+    footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
     embed.set_footer(text=footer)
     await ctx.send(embed=embed)
 
