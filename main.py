@@ -72,7 +72,7 @@ async def solo(ctx: SlashContext, character, request=""):
     embed.set_footer(text=footer)
     await ctx.send(embed=embed)
 
-@slash.slash(name="help", description="Get help with the bot.")
+@slash.slash(name="help", description="Get help with the Scene Prompt bot.")
 async def help(ctx: SlashContext):  
     await ctx.defer()
     title = "AI Suggestions Help"
@@ -83,8 +83,8 @@ async def help(ctx: SlashContext):
     description += "\n`/scene` - Get a scene prompt! Describe the characters involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
     description += "\n`/solo` - Get a solo prompt! Describe the character involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
     description += "\n\n## Example Usage"
-    description += "\n\n ### Bad Usage:\n `/scene character1:Dave, character2:Geraldine`\n It might be clear to you who Dave and Geraldine are, but the bot doesn't know. It will do its best, but will generate a prompt that may not fit your expectations."
-    description += "\n\n ### Good Usage:\n `scene character1:Dave, a retired carpenter who wants to reconcile with his estranged daughter but is too proud to admit fault, character 2:Geraldine, Dave's daughter, who is a successful merchant and has no time for her father's nonsense`\n This description is much more detailed, and the bot will be able to generate a prompt that fits your expectations."
+    description += "\n\n**Bad Usage**:\n `/scene character1:Dave, character2:Geraldine`\n It might be clear to you who Dave and Geraldine are, but the bot doesn't know. It will do its best, but will generate a prompt that may not fit your expectations."
+    description += "\n\n**Good Usage**:\n `scene character1:Dave, a retired carpenter who wants to reconcile with his estranged daughter but is too proud to admit fault, character 2:Geraldine, Dave's daughter, who is a successful merchant and has no time for her father's nonsense`\n This description is much more detailed, and the bot will be able to generate a prompt that fits your expectations."
     description += f"\n\nThe bot is currently in beta, using the {model} model, so please report any bugs or suggestions to @lxgrf."
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
