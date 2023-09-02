@@ -78,7 +78,7 @@ async def help(ctx: SlashContext):
     title = "AI Suggestions Help"
     description = "This bot generates scene ideas based on brief character descriptions you supply. It uses the OpenAI API to generate text, and the Discord API to send it to you."
     # description += "\n\nThe bot does not _know_ your character, so be sure to include any relevant detail in your description. For example, `character:Dave` will not produce results as good as `character:Dave, a retired carpenter with terrible luck, who has recently had an argument with his daughter`."
-    description += "\nNote that any detail supplied may be used, so if you don't want the scene to, for example, focus on stealing something, don't mention that they are a thief - even if they are."
+    description += "\nNote that any detail supplied may be used, so mentioning that your character is a thief ups the chances of the scene involving theft. Hold back detail you don't want to see."
     description += "\n\n## Commands"
     description += "\n`/scene` - Get a scene prompt! Describe the characters involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
     description += "\n`/solo` - Get a solo prompt! Describe the character involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
