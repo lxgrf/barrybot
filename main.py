@@ -19,6 +19,7 @@ headers = {'content-type': 'application/json', "Authorization":f'Bearer {openai_
 guilds ={
     "1010366904612954203":"a fantasy city",
     "866376531995918346":"the city of Silverymoon, in Faerûn",
+    "1001193835835183174":"the city of Caddocia, in a homebrew fantasy world",
          }
 
 def _server_error(ctx):
