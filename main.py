@@ -6,7 +6,6 @@ import os
 
 openai_api = str(os.environ['openai'])
 discord_api = str(os.environ['discord'])
-# model = "text-davinci-003"
 model = "gpt-3.5-turbo"
 max_tokens = 200
 temperature = 1.2
@@ -14,12 +13,11 @@ temperature = 1.2
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
 
-# url = 'https://api.openai.com/v1/completions'
 url = 'https://api.openai.com/v1/chat/completions'
 headers = {'content-type': 'application/json', "Authorization":f'Bearer {openai_api}'}
 
 guilds ={
-    "1010366904612954203":"a fantasy city",
+    # "1010366904612954203":"a fantasy city",
     "866376531995918346":"the city of Silverymoon, in Faerûn",
          }
 
