@@ -18,59 +18,83 @@ slash = SlashCommand(bot, sync_commands=True)
 url = 'https://api.openai.com/v1/chat/completions'
 headers = {'content-type': 'application/json', "Authorization":f'Bearer {openai_api}'}
 
+guilds ={
+    "1010366904612954203":"a fantasy city",
+    "866376531995918346":"the city of Silverymoon, in Faerûn",
+         }
+
+def _server_error(ctx):
+        title = "Error - Server not recognised."
+        description = f"Your Server ID is {ctx.guild.id}. This guild is not on the authorised list for this bot. Please contact `@lxgrf` if you believe this is in error."
+        embed = Embed(title=title, description=description)
+        footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
+        embed.set_footer(text=footer)
+        return embed
+
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
 async def scene(ctx: SlashContext, character1, character2, request=""):
     await ctx.defer()
-    description = f"**First character**: `{character1}`\n**Second character**: `{character2}`"
-    prompt = f"Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in the city of Silverymoon, in Faerûn. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than four bullet points."
-    if request != "": 
-        prompt += f" {request}."
-        description += f"\n**Request**: `{request}`"
-    messages = [
-        {"role": "system", "content": "You are a D&D Dungeonmaster."},
-        {"role": "user", "content":prompt},
-    ]
-    # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
-    payload = {
-        "model":model,
-        "messages":messages,
-        "temperature":temperature,
-        "max_tokens":max_tokens}
-    payload = json.dumps(payload, indent = 4)
-    r = requests.post(url=url, data=payload, headers=headers)
-    description += f"\n\n{r.json()['choices'][0]['message']['content']}"
-    embed = Embed(title=f"Here is your scene prompt!", description=description)
-    footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
-    embed.set_footer(text=footer)
-    await ctx.send(embed=embed)
+    if str(ctx.guild.id) not in guilds:
+        embed = _server_error(ctx)
+        await ctx.send(embed=embed)
+    else:
+        title = "Here is your scene prompt!"
+        city = guilds[str(ctx.guild.id)]
+        description = f"**First character**: `{character1}`\n**Second character**: `{character2}`"
+        prompt = f"Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in {city}. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than four bullet points."
+        if request != "": 
+            prompt += f" {request}."
+            description += f"\n**Request**: `{request}`"
+        messages = [
+            {"role": "system", "content": "You are a D&D Dungeonmaster."},
+            {"role": "user", "content":prompt},
+        ]
+        payload = {
+            "model":model,
+            "messages":messages,
+            "temperature":temperature,
+            "max_tokens":max_tokens}
+        payload = json.dumps(payload, indent = 4)
+        r = requests.post(url=url, data=payload, headers=headers)
+        description += f"\n\n{r.json()['choices'][0]['message']['content']}"
+        embed = Embed(title=title, description=description)
+        footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
+        embed.set_footer(text=footer)
+        await ctx.send(embed=embed)
 
 @slash.slash(name="solo", description="Get a solo prompt! Describe the character involved specifying any relevant detail.")
 async def solo(ctx: SlashContext, character, request=""):
     await ctx.defer()
-    description = f"**Character**: `{character}`"
-    prompt = f"Give a short, concise, bullet-point summary of an idea for an emotive and interesting character development scene for a D&D character in the city of Silverymoon, in Faerûn. The character is {character}. Avoid creating backstory for this character, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than 3 bullet points."
-    if request != "": 
-        prompt += f" {request}."
-        description += f"\n**Request**: `{request}`"
-    messages = [
-        {"role": "system", "content": "You are a D&D Dungeonmaster."},
-        {"role": "user", "content":prompt},
-        ]
-    # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
-    payload = {
-        "model":model,
-        "messages":messages,
-        "temperature":temperature,
-        "max_tokens":max_tokens}
-    # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
-    # payload = {"model":model,"prompt":prompt,"temperature":0.8,"max_tokens":150}
-    payload = json.dumps(payload, indent = 4)
-    r = requests.post(url=url, data=payload, headers=headers)
-    description += f"\n\n{r.json()['choices'][0]['message']['content']}"
-    embed = Embed(title=f"Here is your solo prompt!", description=description)
-    footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
-    embed.set_footer(text=footer)
-    await ctx.send(embed=embed)
+    if str(ctx.guild.id) not in guilds:
+        embed = _server_error(ctx)
+        await ctx.send(embed=embed)
+    else:
+        title = "Here is your solo scene prompt!"
+        city = guilds[str(ctx.guild.id)]
+        description = f"**Character**: `{character}`"
+        prompt = f"Give a short, concise, bullet-point summary of an idea for an emotive and interesting character development scene for a D&D character in {city}. The character is {character}. Avoid creating backstory for this character, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than 3 bullet points."
+        if request != "": 
+            prompt += f" {request}."
+            description += f"\n**Request**: `{request}`"
+        messages = [
+            {"role": "system", "content": "You are a D&D Dungeonmaster."},
+            {"role": "user", "content":prompt},
+            ]
+        # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
+        payload = {
+            "model":model,
+            "messages":messages,
+            "temperature":temperature,
+            "max_tokens":max_tokens}
+        # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
+        # payload = {"model":model,"prompt":prompt,"temperature":0.8,"max_tokens":150}
+        payload = json.dumps(payload, indent = 4)
+        r = requests.post(url=url, data=payload, headers=headers)
+        description += f"\n\n{r.json()['choices'][0]['message']['content']}"
+        embed = Embed(title=title, description=description)
+        footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
+        embed.set_footer(text=footer)
+        await ctx.send(embed=embed)
 
 @slash.slash(name="help", description="Get help with the Scene Prompt bot.")
 async def help(ctx: SlashContext):  
