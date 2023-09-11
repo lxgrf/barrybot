@@ -4,30 +4,24 @@ from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
 import os
 
-openai_api = str(os.environ['openai'])
-discord_api = str(os.environ['discord'])
 model = "gpt-3.5-turbo"
 max_tokens = 200
 temperature = 1.2
-
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
-
 url = 'https://api.openai.com/v1/chat/completions'
-headers = {'content-type': 'application/json', "Authorization":f'Bearer {openai_api}'}
+headers = {'content-type': 'application/json', "Authorization":f"Bearer {str(os.environ['openai'])}"}
 
 guilds ={
-    "1010366904612954203":"a fantasy city",
+    "1010366904612954203":"a fantasy city", # Test Server
     "866376531995918346":"the city of Silverymoon, in Faerûn",
     "1001193835835183174":"the city of Caddocia, in a homebrew fantasy world",
          }
 
 def _server_error(ctx):
         title = "Error - Server not recognised."
-        description = f"Your Server ID is {ctx.guild.id}. This guild is not on the authorised list for this bot. Please contact `@lxgrf` if you believe this is in error."
+        description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
         embed = Embed(title=title, description=description)
-        # footer = f"/scene or /solo | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
-        # embed.set_footer(text=footer)
         return embed
 
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
@@ -44,21 +38,13 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
         if request != "": 
             prompt += f" {request}."
             description += f"\n**Request**: `{request}`"
-        messages = [
-            {"role": "system", "content": "You are a D&D Dungeonmaster."},
-            {"role": "user", "content":prompt},
-        ]
-        payload = {
-            "model":model,
-            "messages":messages,
-            "temperature":temperature,
-            "max_tokens":max_tokens}
+        messages = [{"role": "system", "content": "You are a D&D Dungeonmaster."},{"role": "user", "content":prompt},]
+        payload = {"model":model,"messages":messages,"temperature":temperature,"max_tokens":max_tokens}
         payload = json.dumps(payload, indent = 4)
         r = requests.post(url=url, data=payload, headers=headers)
         description += f"\n\n{r.json()['choices'][0]['message']['content']}"
-        embed = Embed(title=title, description=description)
         footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
-        embed.set_footer(text=footer)
+        embed = Embed(title=title, description=description, footer=footer)
         await ctx.send(embed=embed)
 
 @slash.slash(name="solo", description="Get a solo prompt! Describe the character involved specifying any relevant detail.")
@@ -75,24 +61,13 @@ async def solo(ctx: SlashContext, character, request=""):
         if request != "": 
             prompt += f" {request}."
             description += f"\n**Request**: `{request}`"
-        messages = [
-            {"role": "system", "content": "You are a D&D Dungeonmaster."},
-            {"role": "user", "content":prompt},
-            ]
-        # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
-        payload = {
-            "model":model,
-            "messages":messages,
-            "temperature":temperature,
-            "max_tokens":max_tokens}
-        # payload = {"model":"text-davinci-003","prompt":prompt,"temperature":0.8,"max_tokens":150}
-        # payload = {"model":model,"prompt":prompt,"temperature":0.8,"max_tokens":150}
+        messages = [{"role": "system", "content": "You are a D&D Dungeonmaster."},{"role": "user", "content":prompt},]
+        payload = {"model":model,"messages":messages,"temperature":temperature,"max_tokens":max_tokens}
         payload = json.dumps(payload, indent = 4)
         r = requests.post(url=url, data=payload, headers=headers)
         description += f"\n\n{r.json()['choices'][0]['message']['content']}"
-        embed = Embed(title=title, description=description)
         footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
-        embed.set_footer(text=footer)
+        embed = Embed(title=title, description=description, footer=footer)
         await ctx.send(embed=embed)
 
 @slash.slash(name="help", description="Get help with the Scene Prompt bot.")
@@ -100,7 +75,6 @@ async def help(ctx: SlashContext):
     await ctx.defer()
     title = "AI Suggestions Help"
     description = "This bot generates scene ideas based on brief character descriptions you supply. It uses the OpenAI API to generate text, and the Discord API to send it to you."
-    # description += "\n\nThe bot does not _know_ your character, so be sure to include any relevant detail in your description. For example, `character:Dave` will not produce results as good as `character:Dave, a retired carpenter with terrible luck, who has recently had an argument with his daughter`."
     description += "\nNote that any detail supplied may be used, so mentioning that your character is a thief ups the chances of the scene involving theft. Hold back detail you don't want to see."
     description += "\n\n## Commands"
     description += "\n`/scene` - Get a scene prompt! Describe the characters involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
@@ -112,4 +86,4 @@ async def help(ctx: SlashContext):
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
 
-bot.run(discord_api)
+bot.run(str(os.environ['discord']))
