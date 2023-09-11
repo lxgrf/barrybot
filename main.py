@@ -17,7 +17,7 @@ url = 'https://api.openai.com/v1/chat/completions'
 headers = {'content-type': 'application/json', "Authorization":f'Bearer {openai_api}'}
 
 guilds ={
-    # "1010366904612954203":"a fantasy city",
+    "1010366904612954203":"a fantasy city",
     "866376531995918346":"the city of Silverymoon, in Faerûn",
          }
 
@@ -25,8 +25,8 @@ def _server_error(ctx):
         title = "Error - Server not recognised."
         description = f"Your Server ID is {ctx.guild.id}. This guild is not on the authorised list for this bot. Please contact `@lxgrf` if you believe this is in error."
         embed = Embed(title=title, description=description)
-        footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
-        embed.set_footer(text=footer)
+        # footer = f"/scene or /solo | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
+        # embed.set_footer(text=footer)
         return embed
 
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
