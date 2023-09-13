@@ -32,7 +32,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
         await ctx.send(embed=embed)
     elif len(character1.split(" ")) < 3 or len(character2.split(" ")) < 3:
         title = "Please provide more detail."
-        description = "Ok, I'll be honest, I haven't read your scenes. Can you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`."
+        description = "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`."
         footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
         embed = Embed(title=title, description=description, footer=footer)
         await ctx.send(embed=embed)
@@ -61,7 +61,7 @@ async def solo(ctx: SlashContext, character, request=""):
         await ctx.send(embed=embed)
     elif len(character.split(" ")) < 3:
         title = "Please provide more detail."
-        description = "Ok, I'll be honest, I haven't read your scenes. Can you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`."
+        description = "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`."
         footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
         embed = Embed(title=title, description=description, footer=footer)
         await ctx.send(embed=embed)
