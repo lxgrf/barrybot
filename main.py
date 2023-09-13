@@ -59,7 +59,7 @@ async def solo(ctx: SlashContext, character, request=""):
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
         await ctx.send(embed=embed)
-    elif len(character.split(" ")):
+    elif len(character.split(" ")) < 3:
         title = "Please provide more detail."
         description = "Ok, I'll be honest, I haven't read your scenes. Can you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`."
         footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
