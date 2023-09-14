@@ -31,7 +31,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
         await ctx.send(embed=embed)
-    elif len(character1.split(" ")) < 3 or len(character2.split(" ")) < 3:
+    elif len(character1.split(" ")) < 5 or len(character2.split(" ")) < 5:
         description += "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`. I have done my best, but the scene I have generated may not fit your expectations.\n\n"
     
     title = "Here is your scene prompt!"
@@ -57,8 +57,8 @@ async def solo(ctx: SlashContext, character, request=""):
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
         await ctx.send(embed=embed)
-    elif len(character.split(" ")) < 3:
-        description += "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`.\n\n"
+    elif len(character.split(" ")) < 5:
+        description += "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about this character, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`.\n\n"
         
     title = "Here is your solo scene prompt!"
     city = guilds[str(ctx.guild.id)]
