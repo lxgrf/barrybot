@@ -3,14 +3,18 @@ import json
 from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
+discordKey = os.getenv("discord")
+openaiKey = os.getenv("openai")
 model = "gpt-3.5-turbo"
 max_tokens = 200
 temperature = 1.2
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
 url = 'https://api.openai.com/v1/chat/completions'
-headers = {'content-type': 'application/json', "Authorization":f"Bearer {str(os.environ['openai'])}"}
+headers = {'content-type': 'application/json', "Authorization":f"Bearer {openaiKey}"}
 
 guilds ={
     "1010366904612954203":"a fantasy city", # Test Server
@@ -92,4 +96,4 @@ async def help(ctx: SlashContext):
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
 
-bot.run(str(os.environ['discord']))
+bot.run(discordKey)
