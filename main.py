@@ -101,7 +101,7 @@ async def on_raw_reaction_add(payload):
     # channel and message IDs should be integer:
     # if payload.channel_id == "1114617198430916610":
     if True:
-        if str(payload.emoji) == ":milo:": # Use a string
+        if str(payload.emoji) == ":cold_face:": # Use a string
             channel1 = bot.get_channel(payload.channel_id)
             await channel1.send("Test")
 
