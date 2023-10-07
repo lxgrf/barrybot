@@ -98,6 +98,7 @@ async def help(ctx: SlashContext):
 
 @bot.event
 async def on_raw_reaction_add(payload):
+    print("react added")
     # channel and message IDs should be integer:
     if payload.channel_id == "1114617198430916610":
     # if True:
