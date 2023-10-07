@@ -82,6 +82,7 @@ async def solo(ctx: SlashContext, character, request=""):
 
 @slash.slash(name="help", description="Get help with the Scene Prompt bot.")
 async def help(ctx: SlashContext):  
+    print("Help sought.")
     await ctx.defer()
     title = "AI Suggestions Help"
     description = "This bot generates scene ideas based on brief character descriptions you supply. It uses the OpenAI API to generate text, and the Discord API to send it to you."
@@ -102,8 +103,9 @@ async def on_raw_reaction_add(payload):
     # channel and message IDs should be integer:
     if payload.channel_id == "1114617198430916610":
     # if True:
-        channel1 = bot.get_channel(payload.channel_id)
-        await channel1.send(payload.emoji)
+        # channel1 = bot.get_channel(payload.channel_id)
+        print(payload.channel_id)
+        # await channel1.send(payload.emoji)
         # if str(payload.emoji) == ":cold_face:": # Use a string
         #     channel1 = bot.get_channel(payload.channel_id)
         #     await channel1.send("Test")
