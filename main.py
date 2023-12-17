@@ -285,14 +285,18 @@ async def channelactivity(ctx: SlashContext):
         for line in active:
             description += line
         description += "\n"
+        embed = Embed(title="Last message", description=description)
+        await ctx.send(embed=embed)
     
     if len(inactive) > 0:
         description += "\nInactive channels:\n"
         for line in inactive:
             description += line
+        embed = Embed(title="Last message", description=description)
+        await ctx.send(embed=embed)
 
-    embed = Embed(title="Last message", description=description)
-    await ctx.send(embed=embed)
+    # embed = Embed(title="Last message", description=description)
+    # await ctx.send(embed=embed)
     return
 
 bot.run(discordKey)
