@@ -22,12 +22,28 @@ guilds ={
     "1001193835835183174":"the city of Caddocia, in a homebrew fantasy world",
          }
 
+# User filtering
+include_role = "Member"
+exclude_role = "Inactive"
+inactivity_threshold = 31 # days
+
 monitored_channels = {
     866376531995918346 : [880874308556169327,923399076609933312,880874380517855282,912466473639878666,880883916779696188,
                           912466154289774642,922542990185103411,922543035273867315,880897412401627166,880881928465682462,
                           939969226951757874,968247532176162816,987467362137702431,987474061590429806,987466872171683892,
-                          987466023793995796,885219132595904613,907353116041699328,974155793928687616], # Silverymoon
-    1114617197931790376 : [1150871698871156840,1172667577890259085], # TEST SERVER
+                          987466023793995796,885219132595904613,907353116041699328,974155793928687616,880874502240751636,
+                          987466462383980574,880874331247349810,880874331247349810,944396675647168532,922534449252556820,
+                          923398707104346112,968247884992618516,990096024171323464,987466249107816528,968247884992618516,
+                          880889305881534475,923400219427758151,880877522500341802,939969468740804659,987465629818847304,
+                          987473574271004682,885219090883571742,885219090883571742,907352356226736128,974155308895186984,
+                          880874583840931890,939970472462921808,968247977510576240,880874392316420117,885377822426791966,
+                          880885934793588786,880889751400513576,923400462013693972,930648938938257439,987465378257072148,
+                          923401112097284177,992147947028496404,880893508456681474,930648696935288922,885219048772735017,
+                          907352384341151845,907352384341151845,974156178089189386,880891131779481631,930647613085200504,
+                          880891175874232320,880891889841225768,880891889841225768,992148025982079087,968177303387504680,
+                          987464710137983067,905908992558104636,930647843172147281
+                          ], # Silverymoon
+    1114617197931790376 : [1150871698871156840,1172667577890259085,1121682493242880052,1114617198430916610,1117684731958530099], # TEST SERVER
 }
 
 def _server_error(ctx):
@@ -104,10 +120,131 @@ async def help(ctx: SlashContext):
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
 
-@slash.slash(name="lastmessage", description="Get the time of the last message in a channel.")
-async def lastmessage(ctx: SlashContext):
+@slash.slash(name="channelcheck", description="Get the time of the last message in a channel.")
+async def channelcheck(ctx: SlashContext):
     await ctx.defer()
     if ctx.guild.id not in monitored_channels:
+        title = "Error - Server not recognised."
+        description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
+        embed = Embed(title=title, description=description)
+        await ctx.send(embed=embed)
+        return
+    if ctx.channel.id not in valid_channels:
+        title = "Error - Channel not recognised."
+        description = f"Your Channel ID is {ctx.channel.id}. This channel is not on the authorised list for this command.\n\nPlease contact `@lxgrf` if you believe this is in error."
+        embed = Embed(title=title, description=description)
+        await ctx.send(embed=embed)
+        return
+    
+    channel_list = monitored_channels[ctx.guild.id]
+    description = ""
+    active = []
+    inactive = []
+
+    for channel_id in channel_list:
+        channel = bot.get_channel(int(channel_id))
+        message = await channel.fetch_message(channel.last_message_id)
+        messageTime = message.created_at
+        timeElapsed = datetime.datetime.utcnow() - messageTime
+        author = message.author
+        status = ":green_circle:"
+        if timeElapsed > datetime.timedelta(days=7):
+            status = ":yellow_circle:"     
+        if timeElapsed > datetime.timedelta(days=14):
+            status = ":red_circle:"
+        # format timeElapsed just as days
+        if timeElapsed.days == 0:
+            timeElapsed = "Today"
+        else:
+            timeElapsed = f"{timeElapsed.days} days ago"
+        descString = f"{status} <#{channel_id}>: {messageTime.strftime('%d/%m/%Y')} by {author.display_name} ({timeElapsed})\n"
+
+        if author.name == "Avrae":
+            inactive.append(descString)
+        else:
+            active.append(descString)
+
+    if len(active) > 0:
+        description += "Active channels:\n"
+        for line in active:
+            description += line
+        description += "\n"
+    
+    if len(inactive) > 0:
+        description += "\nInactive channels:\n"
+        for line in inactive:
+            description += line
+
+    embed = Embed(title="Last message", description=description)
+    await ctx.send(embed=embed)
+    return
+
+@slash.slash(name="useractivity", description="See the RP activity of users.")
+async def useractivity(ctx: SlashContext):
+    await ctx.defer()
+    if ctx.guild.id not in monitored_channels.keys():
+        title = "Error - Server not recognised."
+        description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
+        embed = Embed(title=title, description=description)
+        await ctx.send(embed=embed)
+        return
+    # get all users 
+    active = [user.id for user in ctx.guild.members if include_role in [role.name for role in user.roles] and exclude_role not in [role.name for role in user.roles]]
+
+    # Get utc time for one month prior to now
+    one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=31)
+    # Get message histories for each channel
+    channel_histories = {}
+    for channel_id in monitored_channels[ctx.guild.id]:
+        channel = bot.get_channel(int(channel_id))
+        messages = channel.history(limit=50, after=one_month_ago)
+        channel_histories[channel_id] = messages
+
+    # Work through each message history and count messages by active users
+    user_activity = {user: 0 for user in active}
+
+    for channel_id, messages in channel_histories.items():
+        # messages is an async iterator
+        # Count the messages by each active user
+        async for message in messages:
+            if message.author.id in active:
+                user_activity[message.author.id] += 1
+
+    # Sort the user activity by number of messages
+    user_activity = {k: v for k, v in sorted(user_activity.items(), key=lambda item: item[1], reverse=True)}
+    
+    description = ""
+    # if any users have zero posts
+    if 0 in user_activity.values():
+        description = f":red_circle: No posts in the last {inactivity_threshold} days:\n"
+        # add each user with zero posts to the description
+        for user, posts in user_activity.items():
+            if posts == 0:
+                description += f"<@{user}>: {user_activity[user]}\n"
+        description += "\n"
+    # if any users have 1-3 posts
+    if 1 in user_activity.values() or 2 in user_activity.values() or 3 in user_activity.values():
+        description += f":yellow_circle: 1-3 posts in the last {inactivity_threshold} days:\n"
+        # add each user with 1-3 posts to the description
+        for user, posts in user_activity.items():
+            if 1 <= posts <= 3:
+                description += f"<@{user}>: {user_activity[user]}\n"
+        description += "\n"
+    # Everyone else
+    description += f":green_circle: 4+ posts in the last {inactivity_threshold} days:\n"
+    # add each user with 4+ posts to the description
+    for user, posts in user_activity.items():
+        if posts >= 4:
+            description += f"<@{user}>: {user_activity[user]}\n"
+
+    embed = Embed(title="User Activity", description=description)
+    await ctx.send(embed=embed)
+    return
+
+@slash.slash(name="channelactivity", description="Get the time of the last message in a channel.")
+async def channelactivity(ctx: SlashContext):
+    await ctx.defer()
+    if ctx.guild.id not in monitored_channels.keys():
         title = "Error - Server not recognised."
         description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
         embed = Embed(title=title, description=description)
@@ -135,7 +272,7 @@ async def lastmessage(ctx: SlashContext):
             timeElapsed = "Today"
         else:
             timeElapsed = f"{timeElapsed.days} days ago"
-        descString = f"{status} <#{channel_id}>: {messageTime.strftime('%d/%m/%Y')} by {author.display_name} ({timeElapsed})\n"
+        descString = f"{status} <#{channel_id}>: {messageTime.strftime('%d/%m/%Y')} by <@{author.id}> ({timeElapsed})\n"
 
         if author.name == "Avrae":
             inactive.append(descString)
