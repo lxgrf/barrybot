@@ -4,6 +4,7 @@ from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
 import os
 from dotenv import load_dotenv
+import datetime
 
 load_dotenv()
 discordKey = os.getenv("discord")
@@ -119,7 +120,7 @@ async def help(ctx: SlashContext):
     description += f"\n\nThe bot is currently in beta, using the {model} model, so please report any bugs or suggestions to @lxgrf. \n\n`Guild ID: {ctx.guild.id}`"
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
-    
+
     
 @slash.slash(name="useractivity", description="See the RP activity of users.")
 async def useractivity(ctx: SlashContext):
