@@ -27,6 +27,7 @@ guilds ={
 include_role = "Member"
 exclude_role = "Inactive"
 inactivity_threshold = 31 # days
+warning_threshold = 14 # days
 
 monitored_channels = {
     866376531995918346 : [880874308556169327,923399076609933312,880874380517855282,912466473639878666,880883916779696188,
@@ -135,50 +136,70 @@ async def useractivity(ctx: SlashContext):
     active = [user.id for user in ctx.guild.members if include_role in [role.name for role in user.roles] and exclude_role not in [role.name for role in user.roles]]
 
     # Get utc time for one month prior to now
-    one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=31)
+    one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=inactivity_threshold)
+    fourteen_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=warning_threshold)
     # Get message histories for each channel
     channel_histories = {}
     for channel_id in monitored_channels[ctx.guild.id]:
         channel = bot.get_channel(int(channel_id))
-        messages = channel.history(limit=50, after=one_month_ago)
+        old_messages = channel.history(limit=50, after=one_month_ago, before=fourteen_days_ago)
+        new_messages = channel.history(limit=50, after=fourteen_days_ago)
         channel_histories[channel_id] = messages
 
     # Work through each message history and count messages by active users
-    user_activity = {user: 0 for user in active}
+    old_activity = {user: 0 for user in active}
+    new_activity = {user: 0 for user in active}
 
     for channel_id, messages in channel_histories.items():
         # messages is an async iterator
         # Count the messages by each active user
-        async for message in messages:
+        async for message in old_messages:
             if message.author.id in active:
-                user_activity[message.author.id] += 1
+                old_activity[message.author.id] += 1
+        async for message in new_messages:
+            if message.author.id in active:
+                new_activity[message.author.id] += 1
+
+    total_activity = {user: old_activity[user] + new_activity[user] for user in active}
 
     # Sort the user activity by number of messages
-    user_activity = {k: v for k, v in sorted(user_activity.items(), key=lambda item: item[1], reverse=True)}
+    new_activity = {k: v for k, v in sorted(new_activity.items(), key=lambda item: item[1], reverse=False)}
+    total_activity = {k: v for k, v in sorted(total_activity.items(), key=lambda item: item[1], reverse=False)}
     
     description = ""
     # if any users have zero posts
-    if 0 in user_activity.values():
+    if 0 in total_activity.values():
         description = f":red_circle: No posts in the last {inactivity_threshold} days:\n"
         # add each user with zero posts to the description
-        for user, posts in user_activity.items():
+        for user, posts in total_activity.items():
             if posts == 0:
-                description += f"<@{user}>: {user_activity[user]}\n"
+                description += f"<@{user}>: {total_activity[user]}\n"
         description += "\n"
+
+    # if any users have zero posts in the last 14 days, but some in the last 31
+    if 0 in new_activity.values():
+        description += f":orange_circle: No posts in the last {warning_threshold} days:\n"
+        # add each user with zero posts to the description
+        for user, posts in new_activity.items():
+            if posts == 0 and total_activity[user] > 0:
+                description += f"<@{user}>: {new_activity[user]}\n"
+        description += "\n"
+
     # if any users have 1-3 posts
-    if 1 in user_activity.values() or 2 in user_activity.values() or 3 in user_activity.values():
+    if 1 in total_activity.values() or 2 in total_activity.values() or 3 in total_activity.values():
         description += f":yellow_circle: 1-3 posts in the last {inactivity_threshold} days:\n"
         # add each user with 1-3 posts to the description
-        for user, posts in user_activity.items():
+        for user, posts in total_activity.items():
             if 1 <= posts <= 3:
-                description += f"<@{user}>: {user_activity[user]}\n"
+                description += f"<@{user}>: {total_activity[user]}\n"
         description += "\n"
+    
     # Everyone else
     description += f":green_circle: 4+ posts in the last {inactivity_threshold} days:\n"
     # add each user with 4+ posts to the description
-    for user, posts in user_activity.items():
+    for user, posts in total_activity.items():
         if posts >= 4:
-            description += f"<@{user}>: {user_activity[user]}\n"
+            description += f"<@{user}>: {total_activity[user]}\n"
 
     embed = Embed(title="User Activity", description=description)
     await ctx.send(embed=embed)
