@@ -273,7 +273,7 @@ async def channelactivity(ctx: SlashContext):
             timeElapsed = "Today"
         else:
             timeElapsed = f"{timeElapsed.days} days ago"
-        descString = f"{status} <#{channel_id}>: {messageTime.strftime('%d/%m/%Y')} by <@{author.id}> ({timeElapsed})\n"
+        descString = f"{status} <#{channel_id}>: {messageTime.strftime('%d/%m/%Y')} ({timeElapsed})\n"
 
         if author.name == "Avrae":
             inactive.append(descString)
@@ -285,18 +285,18 @@ async def channelactivity(ctx: SlashContext):
         for line in active:
             description += line
         description += "\n"
-        embed = Embed(title="Last message", description=description)
-        await ctx.send(embed=embed)
+        # embed = Embed(title="Last message", description=description)
+        # await ctx.send(embed=embed)
     
     if len(inactive) > 0:
         description += "\nInactive channels:\n"
         for line in inactive:
             description += line
-        embed = Embed(title="Last message", description=description)
-        await ctx.send(embed=embed)
+        # embed = Embed(title="Last message", description=description)
+        # await ctx.send(embed=embed)
 
-    # embed = Embed(title="Last message", description=description)
-    # await ctx.send(embed=embed)
+    embed = Embed(title="Last message", description=description)
+    await ctx.send(embed=embed)
     return
 
 bot.run(discordKey)
