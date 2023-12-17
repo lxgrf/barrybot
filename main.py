@@ -119,66 +119,8 @@ async def help(ctx: SlashContext):
     description += f"\n\nThe bot is currently in beta, using the {model} model, so please report any bugs or suggestions to @lxgrf. \n\n`Guild ID: {ctx.guild.id}`"
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
-
-@slash.slash(name="channelcheck", description="Get the time of the last message in a channel.")
-async def channelcheck(ctx: SlashContext):
-    await ctx.defer()
-    if ctx.guild.id not in monitored_channels:
-        title = "Error - Server not recognised."
-        description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
-        embed = Embed(title=title, description=description)
-        await ctx.send(embed=embed)
-        return
-    if ctx.channel.id not in valid_channels:
-        title = "Error - Channel not recognised."
-        description = f"Your Channel ID is {ctx.channel.id}. This channel is not on the authorised list for this command.\n\nPlease contact `@lxgrf` if you believe this is in error."
-        embed = Embed(title=title, description=description)
-        await ctx.send(embed=embed)
-        return
     
-    channel_list = monitored_channels[ctx.guild.id]
-    description = ""
-    active = []
-    inactive = []
-
-    for channel_id in channel_list:
-        channel = bot.get_channel(int(channel_id))
-        message = await channel.fetch_message(channel.last_message_id)
-        messageTime = message.created_at
-        timeElapsed = datetime.datetime.utcnow() - messageTime
-        author = message.author
-        status = ":green_circle:"
-        if timeElapsed > datetime.timedelta(days=7):
-            status = ":yellow_circle:"     
-        if timeElapsed > datetime.timedelta(days=14):
-            status = ":red_circle:"
-        # format timeElapsed just as days
-        if timeElapsed.days == 0:
-            timeElapsed = "Today"
-        else:
-            timeElapsed = f"{timeElapsed.days} days ago"
-        descString = f"{status} <#{channel_id}>: {messageTime.strftime('%d/%m/%Y')} by {author.display_name} ({timeElapsed})\n"
-
-        if author.name == "Avrae":
-            inactive.append(descString)
-        else:
-            active.append(descString)
-
-    if len(active) > 0:
-        description += "Active channels:\n"
-        for line in active:
-            description += line
-        description += "\n"
     
-    if len(inactive) > 0:
-        description += "\nInactive channels:\n"
-        for line in inactive:
-            description += line
-
-    embed = Embed(title="Last message", description=description)
-    await ctx.send(embed=embed)
-    return
-
 @slash.slash(name="useractivity", description="See the RP activity of users.")
 async def useractivity(ctx: SlashContext):
     await ctx.defer()
