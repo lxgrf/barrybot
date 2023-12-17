@@ -29,6 +29,8 @@ exclude_role = "Inactive"
 inactivity_threshold = 31 # days
 warning_threshold = 14 # days
 
+authorised_roles = ["Helper","Dragonspeaker","Mods","Admin","Owner"]
+
 monitored_channels = {
     866376531995918346 : [880874308556169327,923399076609933312,880874380517855282,912466473639878666,880883916779696188,
                           912466154289774642,922542990185103411,922543035273867315,880897412401627166,880881928465682462,
@@ -49,10 +51,16 @@ monitored_channels = {
 }
 
 def _server_error(ctx):
-        title = "Error - Server not recognised."
-        description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
-        embed = Embed(title=title, description=description)
-        return embed
+    title = "Error - Server not recognised."
+    description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
+    embed = Embed(title=title, description=description)
+    return embed
+
+def _authorised_user():
+    title = "Error - User not authorised."
+    description = "Some functions are restricted to authorised users only. Please contact `@lxgrf` if you feel you should have access."
+    embed = Embed(title=title, description=description)
+    return embed
 
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
 async def scene(ctx: SlashContext, character1, character2, request=""):
@@ -132,6 +140,17 @@ async def useractivity(ctx: SlashContext):
         embed = Embed(title=title, description=description)
         await ctx.send(embed=embed)
         return
+
+    # see if user is authorised - if any of the authorised roles are in the user's roles, they are authorised
+    authorised = False
+    for role in ctx.author.roles:
+        if role.name in authorised_roles:
+            authorised = True
+    if not authorised:
+        embed = _authorised_user()
+        await ctx.send(embed=embed)
+        return
+
     # get all users 
     active = [user.id for user in ctx.guild.members if include_role in [role.name for role in user.roles] and exclude_role not in [role.name for role in user.roles]]
 
@@ -222,6 +241,15 @@ async def channelactivity(ctx: SlashContext):
         await ctx.send(embed=embed)
         return
     
+    authorised = False
+    for role in ctx.author.roles:
+        if role.name in authorised_roles:
+            authorised = True
+    if not authorised:
+        embed = _authorised_user()
+        await ctx.send(embed=embed)
+        return
+    
     channel_list = monitored_channels[ctx.guild.id]
     description = ""
     active = []
@@ -229,7 +257,9 @@ async def channelactivity(ctx: SlashContext):
 
     for channel_id in channel_list:
         channel = bot.get_channel(int(channel_id))
-        message = await channel.fetch_message(channel.last_message_id)
+        messages = channel.history(limit=1)
+        message = await messages.next()
+        # message = await channel.fetch_message(channel.last_message_id)
         messageTime = message.created_at
         timeElapsed = datetime.datetime.utcnow() - messageTime
         author = message.author
