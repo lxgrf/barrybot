@@ -37,7 +37,7 @@ monitored_channels = {
                           939969226951757874,968247532176162816,987467362137702431,987474061590429806,987466872171683892,
                           987466023793995796,885219132595904613,907353116041699328,974155793928687616,880874502240751636,
                           987466462383980574,880874331247349810,880874331247349810,944396675647168532,922534449252556820,
-                          923398707104346112,968247884992618516,990096024171323464,987466249107816528,968247884992618516,
+                          923398707104346112,968247884992618516,990096024171323464,987466249107816528,
                           880889305881534475,923400219427758151,880877522500341802,939969468740804659,987465629818847304,
                           987473574271004682,885219090883571742,885219090883571742,907352356226736128,974155308895186984,
                           880874583840931890,939970472462921808,968247977510576240,880874392316420117,885377822426791966,
@@ -281,22 +281,22 @@ async def channelactivity(ctx: SlashContext):
             active.append(descString)
 
     if len(active) > 0:
-        description += "Active channels:\n"
+        description = "Active channels:\n"
         for line in active:
             description += line
         description += "\n"
-        # embed = Embed(title="Last message", description=description)
-        # await ctx.send(embed=embed)
+        embed = Embed(title="Last message", description=description)
+        await ctx.send(embed=embed)
     
     if len(inactive) > 0:
-        description += "\nInactive channels:\n"
+        description = "\nInactive channels:\n"
         for line in inactive:
             description += line
-        # embed = Embed(title="Last message", description=description)
-        # await ctx.send(embed=embed)
+        embed = Embed(title="Last message", description=description)
+        await ctx.send(embed=embed)
 
-    embed = Embed(title="Last message", description=description)
-    await ctx.send(embed=embed)
+    # embed = Embed(title="Last message", description=description)
+    # await ctx.send(embed=embed)
     return
 
 bot.run(discordKey)
