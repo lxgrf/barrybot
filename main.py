@@ -139,26 +139,33 @@ async def useractivity(ctx: SlashContext):
     one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=inactivity_threshold)
     fourteen_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=warning_threshold)
     # Get message histories for each channel
-    channel_histories = {}
+    channel_histories_new = {}
+    channel_histories_old = {}
     for channel_id in monitored_channels[ctx.guild.id]:
         channel = bot.get_channel(int(channel_id))
         old_messages = channel.history(limit=50, after=one_month_ago, before=fourteen_days_ago)
         new_messages = channel.history(limit=50, after=fourteen_days_ago)
-        channel_histories[channel_id] = messages
+        channel_histories_new[channel_id] = new_messages
+        channel_histories_old[channel_id] = old_messages
+
 
     # Work through each message history and count messages by active users
     old_activity = {user: 0 for user in active}
     new_activity = {user: 0 for user in active}
 
-    for channel_id, messages in channel_histories.items():
+    for channel_id, messages in channel_histories_new.items():
         # messages is an async iterator
         # Count the messages by each active user
-        async for message in old_messages:
-            if message.author.id in active:
-                old_activity[message.author.id] += 1
-        async for message in new_messages:
+        async for message in messages:
             if message.author.id in active:
                 new_activity[message.author.id] += 1
+        
+    for channel_id, messages in channel_histories_old.items():
+        # messages is an async iterator
+        # Count the messages by each active user
+        async for message in messages:
+            if message.author.id in active:
+                old_activity[message.author.id] += 1
 
     total_activity = {user: old_activity[user] + new_activity[user] for user in active}
 
@@ -201,7 +208,7 @@ async def useractivity(ctx: SlashContext):
         if posts >= 4:
             description += f"<@{user}>: {total_activity[user]}\n"
 
-    embed = Embed(title="User Activity", description=description)
+    embed = Embed(title="User Activity in RP Channels", description=description)
     await ctx.send(embed=embed)
     return
 
