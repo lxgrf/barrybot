@@ -281,7 +281,7 @@ async def channelactivity(ctx: SlashContext):
             active.append(descString)
 
     if len(active) > 0:
-        description = "Active channels:\n"
+        description = "# Active channels:\n(Channels with an ongoing RP scene)\n\n"
         for line in active:
             description += line
         description += "\n"
@@ -289,7 +289,7 @@ async def channelactivity(ctx: SlashContext):
         await ctx.send(embed=embed)
     
     if len(inactive) > 0:
-        description = "\nInactive channels:\n"
+        description = "# Inactive channels:\n(Channels where the last message was from Avrae)\n\n"
         for line in inactive:
             description += line
         embed = Embed(title="Last message", description=description)
