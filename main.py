@@ -192,21 +192,16 @@ async def useractivity(ctx: SlashContext):
         channel_histories_new[channel_id] = new_messages
         channel_histories_old[channel_id] = old_messages
 
-
     # Work through each message history and count messages by active users
     old_activity = {user: 0 for user in active}
     new_activity = {user: 0 for user in active}
 
     for channel_id, messages in channel_histories_new.items():
-        # messages is an async iterator
-        # Count the messages by each active user
         async for message in messages:
             if message.author.id in active:
                 new_activity[message.author.id] += 1
         
     for channel_id, messages in channel_histories_old.items():
-        # messages is an async iterator
-        # Count the messages by each active user
         async for message in messages:
             if message.author.id in active:
                 old_activity[message.author.id] += 1
