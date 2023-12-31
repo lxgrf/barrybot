@@ -213,6 +213,7 @@ async def useractivity(ctx: SlashContext):
     total_activity = {k: v for k, v in sorted(total_activity.items(), key=lambda item: item[1], reverse=False)}
     
     description = ""
+    inactive = {}
     # if any users have zero posts
     if 0 in total_activity.values():
         description = f":red_circle: No posts in the last {inactivity_threshold} days:\n"
@@ -220,6 +221,7 @@ async def useractivity(ctx: SlashContext):
         for user, posts in total_activity.items():
             if posts == 0:
                 description += f"<@{user}>: {total_activity[user]}\n"
+                inactive.update({user: 0})
         description += "\n"
 
     # if any users have zero posts in the last 14 days, but some in the last 31
@@ -249,6 +251,42 @@ async def useractivity(ctx: SlashContext):
 
     embed = Embed(title="User Activity in RP Channels", description=description)
     await ctx.send(embed=embed)
+
+    # Now let's dig deeper into the inactive users and when they did last post
+    description = ""
+    # get all messages from the last 180 days
+    six_months_ago = datetime.datetime.utcnow() - datetime.timedelta(days=180)
+
+    for channel_id in monitored_channels[ctx.guild.id]:
+        channel = bot.get_channel(int(channel_id))
+        messages = channel.history(limit=500, after=six_months_ago, before=one_month_ago)
+        async for message in messages:
+            if message.author.id in inactive.keys():
+                # convert message.created_at to days since today
+                timeElapsed = datetime.datetime.utcnow() - message.created_at
+                if timeElapsed.days > inactive[message.author.id]:
+                    inactive[message.author.id] = timeElapsed.days
+
+    # Remove users who have not posted at all to a separate list
+    inactive_zero = {}
+    for user, days in inactive.items():
+        if days == 0:
+            inactive_zero.update({user: days})
+    for user in inactive_zero.keys():
+        inactive.pop(user)
+
+    # if any users have zero posts
+    description += "No RP posts in the last 180 days. Please note that this _will_ include brand new users who have yet to post.\n\n"
+    for user, days in inactive_zero.items():
+        description += f"<@{user}>\n"
+
+    description += "\nNo RP posts in the last 31 days:\n\n"
+    for user, days in {k: v for k, v in sorted(inactive.items(), key=lambda item: item[1], reverse=True)}:
+        description += f"<@{user}>: {days} days ago\n"
+
+    embed = Embed(title="Inactive User Deep Dive", description=description)
+    await ctx.send(embed=embed)
+
     return
 
 @slash.slash(name="channelactivity", description="Get the time of the last message in a channel.")
@@ -307,16 +345,6 @@ async def channelactivity(ctx: SlashContext):
         description += "\n"
         embed = Embed(title="Last message", description=description)
         await ctx.send(embed=embed)
-    
-    # if len(inactive) > 0:
-    #     description = "# Inactive channels:\n(Channels where the last message was from Avrae)\n\n"
-    #     for line in inactive:
-    #         description += line
-    #     embed = Embed(title="Last message", description=description)
-    #     await ctx.send(embed=embed)
-
-    # embed = Embed(title="Last message", description=description)
-    # await ctx.send(embed=embed)
     return
 
 bot.run(discordKey)
