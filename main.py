@@ -276,13 +276,13 @@ async def useractivity(ctx: SlashContext):
         inactive.pop(user)
 
     # if any users have zero posts
-    description += "No RP posts in the last 180 days. Please note that this _will_ include brand new users who have yet to post.\n\n"
+    description += "No RP posts in the last 180 days. Please note that this may include brand new users who have yet to post.\n\n"
     for user, days in inactive_zero.items():
         description += f"<@{user}>\n"
 
-    description += "\nNo RP posts in the last 31 days:\n\n"
+    description += "\nPosts in the past, but none in the last 31 days:\n\n"
     for user, days in {k: v for k, v in sorted(inactive.items(), key=lambda item: item[1], reverse=True)}:
-        description += f"<@{user}>: {days} days ago\n"
+        description += f"<@{user}>: last post {days} days ago.\n"
 
     embed = Embed(title="Inactive User Deep Dive", description=description)
     await ctx.send(embed=embed)
