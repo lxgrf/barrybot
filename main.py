@@ -221,7 +221,7 @@ async def useractivity(ctx: SlashContext):
         for user, posts in total_activity.items():
             if posts == 0:
                 description += f"<@{user}>: {total_activity[user]}\n"
-                inactive.update({user: 0})
+                inactive.update({user: 200})
         description += "\n"
 
     # if any users have zero posts in the last 14 days, but some in the last 31
@@ -264,13 +264,13 @@ async def useractivity(ctx: SlashContext):
             if message.author.id in inactive.keys():
                 # convert message.created_at to days since today
                 timeElapsed = datetime.datetime.utcnow() - message.created_at
-                if timeElapsed.days > inactive[message.author.id]:
-                    inactive[message.author.id] = timeElapsed.days
+                if timeElapsed.days < inactive[message.author.id]:
+                    inactive[message.author.id] = int(timeElapsed.days)
 
     # Remove users who have not posted at all to a separate list
     inactive_zero = {}
     for user, days in inactive.items():
-        if days == 0:
+        if days == 200:
             inactive_zero.update({user: days})
     for user in inactive_zero.keys():
         inactive.pop(user)
