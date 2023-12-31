@@ -283,7 +283,7 @@ async def useractivity(ctx: SlashContext):
 
     if len(inactive) > 0:
         description += "\nPosts in the past, but none in the last 31 days:\n\n"
-        for user, days in {k: v for k, v in sorted(inactive.items(), key=lambda item: item[1], reverse=True)}:
+        for user, days in sorted(inactive.items(), key=lambda item: item[1], reverse=True):
             description += f"<@{user}>: last post {days} days ago.\n"
 
     if len(inactive_zero) > 0 or len(inactive) > 0:
