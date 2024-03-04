@@ -378,7 +378,10 @@ async def channelactivity(ctx: SlashContext):
             users = ["@" + user for user in users]
             users = ", ".join(users)
 
-            message = await messages.next()
+            # this next line errors on an empty queue. Fix it.
+            
+            message = await new_messages.next() 
+
             # message = await channel.fetch_message(channel.last_message_id)
             messageTime = message.created_at
             timeElapsed = datetime.datetime.utcnow() - messageTime
