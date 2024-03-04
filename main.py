@@ -37,10 +37,10 @@ monitored_channels = {
                         912466154289774642,922542990185103411,922543035273867315,880897412401627166,880881928465682462,
                         939969226951757874,968247532176162816,987467362137702431,987474061590429806,987466872171683892,
                         987466023793995796,885219132595904613,907353116041699328,974155793928687616,880874502240751636,
-                        987466462383980574,880874331247349810,880874331247349810,944396675647168532,922534449252556820,
+                        987466462383980574,880874331247349810,944396675647168532,922534449252556820,
                         923398707104346112,968247884992618516,990096024171323464,987466249107816528,
                         880889305881534475,923400219427758151,880877522500341802,939969468740804659,987465629818847304,
-                        987473574271004682,885219090883571742,885219090883571742,907352356226736128,974155308895186984,
+                        987473574271004682,885219090883571742,907352356226736128,974155308895186984,
                         880874583840931890,939970472462921808,968247977510576240,880874392316420117,885377822426791966,
                         880885934793588786,880889751400513576,923400462013693972,930648938938257439,987465378257072148,
                         923401112097284177,992147947028496404,880893508456681474,930648696935288922,885219048772735017,
@@ -348,6 +348,28 @@ async def channelactivity(ctx: SlashContext):
         description += "\n"
         embed = Embed(title="Last message", description=description)
         await ctx.send(embed=embed)
+
+    # Dormant Scene Finder
+    # Get all channels where the last message was NOT from Avrae
+    
+    active_channels = []
+    for channel_id in channel_list:
+        channel = bot.get_channel(int(channel_id))
+        messages = channel.history(limit=1)
+        message = await messages.next()
+        messageTime = message.created_at
+        timeElapsed = datetime.datetime.utcnow() - messageTime
+        if timeElapsed < datetime.timedelta(days=channeltimes[ctx.guild.id]["yellow"]):
+            active_channels.append(channel_id)    
+
+    # For each channel, get the user IDs of everyone who has posted since Avrae in that channel
+    channel_posters = {}
+    # Find the last message from Avrae in each channel
+    
+
+
     return
+
+
 
 bot.run(discordKey)
