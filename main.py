@@ -367,13 +367,13 @@ async def channelactivity(ctx: SlashContext):
             # sort older_messages by time, newest first
             async for message in older_messages:
                 if message.author.name == "Avrae":
-                    startpoint = message.created_at
+                    further_back = datetime.datetime.utcnow() - message.created_at
                     break
             # get all messages since the startpoint
-            new_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=startpoint)
+            new_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
             users = []
             async for message in new_messages:
-                if message.author.name not in users:
+                if message.author.name not in users and message.author.name != "Avrae":
                     users.append(message.author.name)
             users = ["@" + user for user in users]
             users = ", ".join(users)
