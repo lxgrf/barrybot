@@ -40,7 +40,7 @@ monitored_channels = {
                         987466462383980574,880874331247349810,880874331247349810,944396675647168532,922534449252556820,
                         923398707104346112,968247884992618516,990096024171323464,987466249107816528,
                         880889305881534475,923400219427758151,880877522500341802,939969468740804659,987465629818847304,
-                        987473574271004682,885219090883571742,885219090883571742,907352356226736128,974155308895186984,
+                        987473574271004682,885219090883571742,907352356226736128,974155308895186984,
                         880874583840931890,939970472462921808,968247977510576240,880874392316420117,885377822426791966,
                         880885934793588786,880889751400513576,923400462013693972,930648938938257439,987465378257072148,
                         923401112097284177,992147947028496404,880893508456681474,930648696935288922,885219048772735017,
@@ -315,6 +315,7 @@ async def channelactivity(ctx: SlashContext):
     description = ""
     active = []
     inactive = []
+    stale = []
 
     for channel_id in channel_list:
         channel = bot.get_channel(int(channel_id))
@@ -329,6 +330,7 @@ async def channelactivity(ctx: SlashContext):
             status = ":yellow_circle:"     
         if timeElapsed > datetime.timedelta(days=channeltimes[ctx.guild.id]["red"]):
             status = ":red_circle:"
+            stale.append(channel_id)
         # format timeElapsed just as days
         if timeElapsed.days == 0:
             timeElapsed = "Today"
@@ -348,6 +350,44 @@ async def channelactivity(ctx: SlashContext):
         description += "\n"
         embed = Embed(title="Last message", description=description)
         await ctx.send(embed=embed)
+
+    
+    # Now let's delve into the long-standing stale channels
+    # For the Channels in the stale list, get the time of the last post by Avrae, and then a list of users who have posted since then
+
+    if len(stale) > 0:
+        description = "Copy and past the below for your weekly pinging needs\n\n"
+        description += "```\n## Weekly pings!\nAs usual, this is a friendly check in on those scenes which seem to be slowing down. How's it going? How's life? Are you both communicating and happy with the pace of things? Do you need any help or hand from anyone?\n"
+        stalepoint = channeltimes[ctx.guild.id]["red"]
+        further_back = stalepoint * 3
+
+        for channel_id in stale:
+            channel = bot.get_channel(int(channel_id))
+            older_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
+            # sort older_messages by time, newest first
+            async for message in older_messages:
+                if message.author.name == "Avrae":
+                    startpoint = message.created_at
+                    break
+            # get all messages since the startpoint
+            new_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=startpoint)
+            users = []
+            async for message in new_messages:
+                if message.author.name not in users:
+                    users.append(message.author.name)
+            users = ["@" + user for user in users]
+            users = ", ".join(users)
+
+            message = await messages.next()
+            # message = await channel.fetch_message(channel.last_message_id)
+            messageTime = message.created_at
+            timeElapsed = datetime.datetime.utcnow() - messageTime
+
+            description += f"<#{channel_id}>: Last post {timeElapsed.days} days ago. ({users})"
+        description += "\n```"
+        embed = Embed(title="Ping Post", description=description)
+        await ctx.send(embed=embed)
+        
     return
 
 bot.run(discordKey)
