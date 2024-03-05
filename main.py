@@ -372,21 +372,22 @@ async def channelactivity(ctx: SlashContext):
             # get all messages since the startpoint
             new_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
             users = []
-            async for message in new_messages:
-                if message.author.name not in users and message.author.name != "Avrae":
-                    users.append(message.author.name)
-            users = ["@" + user for user in users]
-            users = ", ".join(users)
+            if len(new_messages) > 0:
+                async for message in new_messages:
+                    if message.author.name not in users and message.author.name != "Avrae":
+                        users.append(message.author.name)
+                users = ["@" + user for user in users]
+                users = ", ".join(users)
 
-            # this next line errors on an empty queue. Fix it.
-            
-            message = await new_messages.next() 
+                # this next line errors on an empty queue. Fix it.
+                
+                message = await new_messages.next() 
 
-            # message = await channel.fetch_message(channel.last_message_id)
-            messageTime = message.created_at
-            timeElapsed = datetime.datetime.utcnow() - messageTime
+                # message = await channel.fetch_message(channel.last_message_id)
+                messageTime = message.created_at
+                timeElapsed = datetime.datetime.utcnow() - messageTime
 
-            description += f"<#{channel_id}>: Last post {timeElapsed.days} days ago. ({users})"
+                description += f"<#{channel_id}>: Last post {timeElapsed.days} days ago. ({users})"
         description += "\n```"
         embed = Embed(title="Ping Post", description=description)
         await ctx.send(embed=embed)
