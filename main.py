@@ -362,37 +362,23 @@ async def channelactivity(ctx: SlashContext):
         further_back = stalepoint * 3
 
         for channel_id in stale:
-            channel = bot.get_channel(int(channel_id))
-            older_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
-            # sort older_messages by time, newest first
-            async for message in older_messages:
-                if message.author.name == "Avrae":
-                    further_back = datetime.datetime.utcnow() - message.created_at
-                    break
-            # get all messages since the startpoint
-            new_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
             users = []
-            if sum(1 for _ in new_messages) > 0:
-                async for message in new_messages:
-                    if message.author.name not in users and message.author.name != "Avrae":
-                        users.append(message.author.name)
-                users = ["@" + user for user in users]
-                users = ", ".join(users)
-
-                # this next line errors on an empty queue. Fix it.
-                
-                message = await new_messages.next() 
-
-                # message = await channel.fetch_message(channel.last_message_id)
-                messageTime = message.created_at
-                timeElapsed = datetime.datetime.utcnow() - messageTime
-
-                description += f"<#{channel_id}>: Last post {timeElapsed.days} days ago. ({users})"
+            channel = bot.get_channel(int(channel_id))
+            message_history = channel.history(limit=25, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
+            async for message in message_history:
+                if message.author.name == "Avrae":
+                    break
+                else:
+                    users.append(message.author.name)
+            users = ["@" + user for user in users]
+            users = ", ".join(users)
+            description += f"<#{channel_id}>: ({users})\n"
+        description += "```"
+        embed = Embed(title="Ping Post", description=description)
+        await ctx.send(embed=embed)
         description += "\n```"
         embed = Embed(title="Ping Post", description=description)
         await ctx.send(embed=embed)
-        
-
     return
 
 
