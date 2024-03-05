@@ -360,19 +360,19 @@ async def channelactivity(ctx: SlashContext):
         description = "Copy and past the below for your weekly pinging needs\n\n"
         description += "```\n## Weekly pings!\nAs usual, this is a friendly check in on those scenes which seem to be slowing down. How's it going? How's life? Are you both communicating and happy with the pace of things? Do you need any help or hand from anyone?\n"
         stalepoint = channeltimes[ctx.guild.id]["red"]
-        further_back = stalepoint * 3
+        further_back = stalepoint * 4
 
         for channel_id in stale:
             users = []
             channel = bot.get_channel(int(channel_id))
             message_history = channel.history(limit=25, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
             async for message in message_history:
-                author = message.author.name
-                if author == "Avrae":
+                message.author.name
+                if message.author.name == "Avrae":
                     break
-                elif author not in users:
-                    users.append(author)
-            users = ["@" + user for user in users]
+                elif message.author.id not in users:
+                    users.append(message.author.id)
+            users = [f"<@{user}>" for user in users]
             users = ", ".join(users)
             description += f"<#{channel_id}>: ({users})\n"
         description += "```"
