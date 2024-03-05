@@ -372,7 +372,7 @@ async def channelactivity(ctx: SlashContext):
             # get all messages since the startpoint
             new_messages = channel.history(limit=250, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
             users = []
-            if len(new_messages) > 0:
+            if sum(1 for _ in new_messages) > 0:
                 async for message in new_messages:
                     if message.author.name not in users and message.author.name != "Avrae":
                         users.append(message.author.name)
