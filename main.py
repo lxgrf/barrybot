@@ -378,11 +378,6 @@ async def channelactivity(ctx: SlashContext):
         description += "```"
         embed = Embed(title="Ping Post", description=description)
         await ctx.send(embed=embed)
-        description += "\n```"
-        embed = Embed(title="Ping Post", description=description)
-        await ctx.send(embed=embed)
     return
-
-
 
 bot.run(discordKey)
