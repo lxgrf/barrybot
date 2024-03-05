@@ -330,7 +330,8 @@ async def channelactivity(ctx: SlashContext):
             status = ":yellow_circle:"     
         if timeElapsed > datetime.timedelta(days=channeltimes[ctx.guild.id]["red"]):
             status = ":red_circle:"
-            stale.append(channel_id)
+            if message.author.name != "Avrae":
+                stale.append(channel_id)
         # format timeElapsed just as days
         if timeElapsed.days == 0:
             timeElapsed = "Today"
@@ -366,10 +367,11 @@ async def channelactivity(ctx: SlashContext):
             channel = bot.get_channel(int(channel_id))
             message_history = channel.history(limit=25, before=datetime.datetime.utcnow() - datetime.timedelta(days=stalepoint), after=datetime.datetime.utcnow() - datetime.timedelta(days=further_back))
             async for message in message_history:
-                if message.author.name == "Avrae":
+                author = message.author.name
+                if author == "Avrae":
                     break
-                else:
-                    users.append(message.author.name)
+                elif author not in users:
+                    users.append(author)
             users = ["@" + user for user in users]
             users = ", ".join(users)
             description += f"<#{channel_id}>: ({users})\n"
