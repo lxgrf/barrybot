@@ -44,7 +44,7 @@ monitored_channels = {
                         880874583840931890,939970472462921808,968247977510576240,880874392316420117,885377822426791966,
                         880885934793588786,880889751400513576,923400462013693972,930648938938257439,987465378257072148,
                         923401112097284177,992147947028496404,880893508456681474,930648696935288922,885219048772735017,
-                        907352384341151845,907352384341151845,974156178089189386,880891131779481631,930647613085200504,
+                        907352384341151845,974156178089189386,880891131779481631,930647613085200504,
                         880891175874232320,880891889841225768,880891889841225768,992148025982079087,968177303387504680,
                         987464710137983067,905908992558104636,930647843172147281
                           ],
@@ -360,7 +360,7 @@ async def channelactivity(ctx: SlashContext):
         description = "Copy and past the below for your weekly pinging needs\n\n"
         description += "```\n## Weekly pings!\nAs usual, this is a friendly check in on those scenes which seem to be slowing down. How's it going? How's life? Are you both communicating and happy with the pace of things? Do you need any help or hand from anyone?\n"
         stalepoint = channeltimes[ctx.guild.id]["red"]
-        further_back = stalepoint * 4
+        further_back = max(180, stalepoint*4)
 
         for channel_id in stale:
             users = []
