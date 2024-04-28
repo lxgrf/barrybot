@@ -2,16 +2,19 @@ import requests
 import json
 from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
-import os
-from dotenv import load_dotenv
+import keys
 import datetime
+import anthropic
 
-load_dotenv()
-discordKey = os.getenv("discord")
-openaiKey = os.getenv("openai")
-model = "gpt-3.5-turbo"
-max_tokens = 200
-temperature = 1.2
+discordKey = keys.discord
+openaiKey = keys.openai
+anthropicKey = keys.anthropic
+
+anthro = anthropic.Anthropic(
+    api_key = anthropicKey
+)
+
+
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
 url = 'https://api.openai.com/v1/chat/completions'
@@ -44,7 +47,7 @@ monitored_channels = {
                         880874392316420117,885377822426791966,880885934793588786,880889751400513576,923400462013693972,
                         930648938938257439,987465378257072148,923401112097284177,992147947028496404,880893508456681474,
                         930648696935288922,885219048772735017,907352384341151845,974156178089189386,880891131779481631,
-                        930647613085200504,880891175874232320,880891889841225768,880891889841225768,992148025982079087,
+                        930647613085200504,880891175874232320,880891889841225768,992148025982079087,
                         968177303387504680,987464710137983067,905908992558104636,930647843172147281
                           ],
     1114617197931790376 : [ # Test Server
@@ -86,6 +89,26 @@ def _authorised_user():
     embed = Embed(title=title, description=description)
     return embed
 
+def claude(prompt):
+    message = anthro.messages.create(
+        model="claude-3-opus-20240229",
+        max_tokens=200,
+        temperature=0.8,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt
+                    }
+                ]
+            }
+        ]
+    )
+    return message.content[0].text
+
+
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
 async def scene(ctx: SlashContext, character1, character2, request=""):
     await ctx.defer()
@@ -99,16 +122,14 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
     title = "Here is your scene prompt!"
     city = guilds[str(ctx.guild.id)]
     description += f"**First character**: `{character1}`\n**Second character**: `{character2}`"
-    prompt = f"Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in {city}. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than four bullet points."
+    prompt = f"You are a D&D Dungeonmaster. Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in {city}. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than four bullet points."
     if request != "": 
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
-    messages = [{"role": "system", "content": "You are a D&D Dungeonmaster."},{"role": "user", "content":prompt},]
-    payload = {"model":model,"messages":messages,"temperature":temperature,"max_tokens":max_tokens}
-    payload = json.dumps(payload, indent = 4)
-    r = requests.post(url=url, data=payload, headers=headers)
-    description += f"\n\n{r.json()['choices'][0]['message']['content']}"
-    footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
+    
+    description += f"\n\n{claude(prompt)}"
+
+    footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with Anthropic Claude."
     embed = Embed(title=title, description=description, footer=footer)
     await ctx.send(embed=embed)
 
@@ -129,12 +150,9 @@ async def solo(ctx: SlashContext, character, request=""):
     if request != "": 
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
-    messages = [{"role": "system", "content": "You are a D&D Dungeonmaster."},{"role": "user", "content":prompt},]
-    payload = {"model":model,"messages":messages,"temperature":temperature,"max_tokens":max_tokens}
-    payload = json.dumps(payload, indent = 4)
-    r = requests.post(url=url, data=payload, headers=headers)
-    description += f"\n\n{r.json()['choices'][0]['message']['content']}"
-    footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with {model}."
+
+    description += f"\n\n{claude(prompt)}"
+    footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with Anthropic's Claude AI."
     embed = Embed(title=title, description=description, footer=footer)
     await ctx.send(embed=embed)
 
@@ -150,7 +168,7 @@ async def help(ctx: SlashContext):
     description += "\n\n## Example Usage"
     description += "\n\n**Bad Usage**:\n `/scene character1:Dave, character2:Geraldine`\n It might be clear to you who Dave and Geraldine are, but the bot doesn't know. It will do its best, but will generate a prompt that may not fit your expectations."
     description += "\n\n**Good Usage**:\n `/scene character1:Dave, a retired carpenter who wants to reconcile with his estranged daughter but is too proud to admit fault, character 2:Geraldine, Dave's daughter, who is a successful merchant and has no time for her father's nonsense`\n This description is much more detailed, and the bot will be able to generate a prompt that fits your expectations."
-    description += f"\n\nThe bot is currently in beta, using the {model} model, so please report any bugs or suggestions to @lxgrf. \n\n`Guild ID: {ctx.guild.id}`"
+    description += f"\n\nThe bot is currently in beta, using Anthropic's Claudea, so please report any bugs or suggestions to @lxgrf. \n\n`Guild ID: {ctx.guild.id}`"
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
 
