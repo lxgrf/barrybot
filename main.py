@@ -89,12 +89,12 @@ def _authorised_user():
     embed = Embed(title=title, description=description)
     return embed
 
-def claude(prompt):
+def claude(prompt, max_tokens=200, temperature=0.8):
     message = anthro.messages.create(
         # model="claude-3-opus-20240229",
-        model = "claude-3-sonnet-20240229"
-        max_tokens=200,
-        temperature=0.8,
+        model = "claude-3-sonnet-20240229",
+        max_tokens=max_tokens,
+        temperature=temperature,
         messages=[
             {
                 "role": "user",
@@ -173,7 +173,6 @@ async def help(ctx: SlashContext):
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
 
-    
 @slash.slash(name="useractivity", description="See the RP activity of users.")
 async def useractivity(ctx: SlashContext):
     await ctx.defer()
@@ -398,4 +397,51 @@ async def channelactivity(ctx: SlashContext):
         await ctx.send(embed=embed)
     return
 
+@slash.slash(name="tldr",description="Summarise the scene above. (IN BETA)")
+async def tldr(ctx: SlashContext):
+    await ctx.defer()
+    if str(ctx.guild.id) not in guilds:
+        embed = _server_error(ctx)
+        await ctx.send(embed=embed)
+    # Get channel messages since the most recent Avrae message.
+    # If the last message was from Avrae, ignore it.
+    # If there are no messages from Avrae, go back to the start of the channel
+    # If there are no messages at all, say so.
+    channel = bot.get_channel(ctx.channel.id)
+    messages = [message async for message in channel.history(limit=100)]
+    if len(messages) == 0:
+        description = "No messages in this channel."
+        embed = Embed(title="TL;DR", description=description)
+        await ctx.send(embed=embed)
+
+        return
+    # If the last message is from Avrae, remove it
+    if messages[-1].author.name == "Avrae":
+        messages.pop()
+    # Find the most recent message from Avrae, and remove all messages before it
+    print(len(messages))
+    for i in range(len(messages)):
+        if messages[i].author.name == "Avrae":
+            new_messages = messages[i:]
+    messages = new_messages
+
+    # Check all players present have opted in to the scene summary
+    # for message in messages:
+        
+    # Now we have a list of messages from the most recent Avrae message to the present
+    # Construct a single string from the messages. For each message, add the author's name and the message content
+
+    content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
+    for message in messages:
+        content += f"{message.author.name}: {message.content}\n----------------\n"
+    
+    description = claude(content, max_tokens=500, temperature=0.5)
+
+    embed = Embed(title="TL;DR", description=description)
+    summaryChannel = bot.get_channel(1237521328244789299)
+    await summaryChannel.send(embed=embed)
+    print("Scene summary delivered!")
+
+
 bot.run(discordKey)
+
