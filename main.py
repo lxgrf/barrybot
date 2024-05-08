@@ -3,14 +3,18 @@ from discord_slash import SlashCommand, SlashContext
 import keys
 import datetime
 import anthropic
+from mistralai.client import MistralClient
+from mistralai.models.chat_completion import ChatMessage
 
 discordKey = keys.discord
 openaiKey = keys.openai
 anthropicKey = keys.anthropic
+mistralKey = keys.mistralai
 
 anthro = anthropic.Anthropic(
     api_key = anthropicKey
 )
+mistral = MistralClient(api_key=mistralKey)
 
 
 bot = Client(intents=Intents.all())
@@ -99,7 +103,7 @@ def _authorised_user():
     embed = Embed(title=title, description=description)
     return embed
 
-def claude(prompt, max_tokens=200, temperature=0.8):
+def claude_call(prompt, max_tokens=200, temperature=0.8):
     message = anthro.messages.create(
         # model="claude-3-opus-20240229",
         model = "claude-3-sonnet-20240229",
@@ -118,6 +122,15 @@ def claude(prompt, max_tokens=200, temperature=0.8):
         ]
     )
     return message.content[0].text
+
+def mistral_call(prompt, max_tokens=200, temperature=0.8):
+    response = mistral.chat(
+        model= "mistral-large-latest",
+        messages=[ChatMessage(role="user", content=prompt)],
+        temperature=temperature,
+        max_tokens=max_tokens,
+        )
+    return response.choices[0].message.content
 
 
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
@@ -162,7 +175,7 @@ async def solo(ctx: SlashContext, character, request=""):
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
 
-    description += f"\n\n{claude(prompt)}"
+    description += f"\n\n{claude_call(prompt)}"
     footer = f"/solo | Request your own solo scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with Anthropic's Claude AI."
     embed = Embed(title=title, description=description, footer=footer)
     await ctx.send(embed=embed)
@@ -465,24 +478,24 @@ async def tldr(ctx: SlashContext):
         else:
             print("Avrae shouldn't be picked up in the role check. Investigate why.")
     
-    if all(users_opted_in.values()) == False:
-        title = "Error - User not opted in."
-        description = f"AI Generated summaries require all participants in a scene to have the {opt_in_role} role. Please contact `@lxgrf` if you believe there is an error."
-        embed = Embed(title=title, description=description)
-        await ctx.send(embed=embed, hidden=True)
-        return
+    # if all(users_opted_in.values()) == False:
+    #     title = "Error - User not opted in."
+    #     description = f"AI Generated summaries require all participants in a scene to have the {opt_in_role} role. Please contact `@lxgrf` if you believe there is an error."
+    #     embed = Embed(title=title, description=description)
+    #     await ctx.send(embed=embed, hidden=True)
+    #     return
 
     content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
     for message in messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
     description = f"[Jump to the start of the scene]({messages[0].jump_url})\n\n"
-    description += claude(content, max_tokens=500, temperature=0.5)
+    description += claude_call(content, max_tokens=500, temperature=0.5)
+    # description += mistral_call(content, max_tokens=500, temperature=0.5)
 
     embed = Embed(title="TL;DR", description=description)
     
     summaryChannel = bot.get_channel(1237521328244789299)
-    # await ctx.send(embed=embed,hidden=True)
     await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
     await summaryChannel.send(embed=embed)
     print("Scene summary delivered!")
