@@ -469,7 +469,7 @@ async def tldr(ctx: SlashContext, option=""):
 
     # Check all players present have opted in to the scene summary
     
-    opt_in_role = "Opt In"
+    opt_in_role = "AI Approval"
     users_opted_in = dict()
     
     for message in messages:
@@ -478,12 +478,12 @@ async def tldr(ctx: SlashContext, option=""):
         else:
             print("Avrae shouldn't be picked up in the role check. Investigate why.")
     
-    # if all(users_opted_in.values()) == False:
-    #     title = "Error - User not opted in."
-    #     description = f"AI Generated summaries require all participants in a scene to have the {opt_in_role} role. Please contact `@lxgrf` if you believe there is an error."
-    #     embed = Embed(title=title, description=description)
-    #     await ctx.send(embed=embed, hidden=True)
-    #     return
+    if all(users_opted_in.values()) == False:
+        title = "Error - User not opted in."
+        description = f"AI Generated summaries require all participants in a scene to have the `{opt_in_role}` role. Please contact `@lxgrf` if you believe there is an error."
+        embed = Embed(title=title, description=description)
+        await ctx.send(embed=embed, hidden=True)
+        return
 
 
     content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
