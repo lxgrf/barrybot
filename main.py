@@ -70,6 +70,12 @@ monitored_channels = {
                         1044715531430797372,
                         ],
             }
+    
+tldr_excluded_channels = {
+    866376531995918346:[], #Silverymoon
+    1114617197931790376: [], #Test Server
+    1001193835835183174: [1044715490544734278,1044717853754019890,1044715531430797372], #Caddocia
+}
 
 channeltimes = {
     866376531995918346 : {"yellow":7,"red":14}, # Silverymoon
@@ -399,10 +405,26 @@ async def channelactivity(ctx: SlashContext):
 
 @slash.slash(name="tldr",description="Summarise the scene above. (IN BETA)")
 async def tldr(ctx: SlashContext):
-    await ctx.defer()
+    await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed,hidden=True)
+        return
+
+    elif ctx.channel.id not in monitored_channels[ctx.guild.id]:
+        title = "Error - Channel not monitored."
+        description = f"This channel is not monitored for RP activity. Please contact `@lxgrf` if you believe this is in error."
+        embed = Embed(title=title, description=description)
+        await ctx.send(embed=embed,hidden=True)
+        return
+
+    elif ctx.channel.id in tldr_excluded_channels[ctx.guild.id]:
+        title = "Error - Channel excluded."
+        description = f"This channel is excluded from TL;DR summaries. Please contact `@lxgrf` if you believe this is in error."
+        embed = Embed(title=title, description=description)
+        await ctx.send(embed=embed,hidden=True)
+        return
+
     # Get channel messages since the most recent Avrae message.
     # If the last message was from Avrae, ignore it.
     # If there are no messages from Avrae, go back to the start of the channel
@@ -412,9 +434,9 @@ async def tldr(ctx: SlashContext):
     if len(messages) == 0:
         description = "No messages in this channel."
         embed = Embed(title="TL;DR", description=description)
-        await ctx.send(embed=embed)
-
+        await ctx.send(embed=embed, hidden=True)
         return
+
     # If the last message is from Avrae, remove it
     if messages[-1].author.name == "Avrae":
         messages.pop()
@@ -426,21 +448,42 @@ async def tldr(ctx: SlashContext):
     messages = new_messages
 
     # Check all players present have opted in to the scene summary
-    # for message in messages:
+    opt_in_role = "Opt In"
+    users_opted_in = dict()
+    
+    for message in messages:
+        if "Avrae" not in [role.name for role in message.author.roles]:
+            users_opted_in[message.author.id] = opt_in_role in [role.name for role in message.author.roles]
+    
+    if all(users_opted_in.values()) == False:
+        title = "Error - User not opted in."
+        description = f"AI Generated summaries require all participants in a scene to have the {opt_in_role} role. Please contact `@lxgrf` if you believe there is an error."
+        embed = Embed(title=title, description=description)
+        await ctx.send(embed=embed, hidden=True)
+        return
         
     # Now we have a list of messages from the most recent Avrae message to the present
     # Construct a single string from the messages. For each message, add the author's name and the message content
+
+    # Get the link to the first message in the scene
+    first_message = messages[0]
+    first_message_link = first_message.jump_url
 
     content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
     for message in messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
-    description = claude(content, max_tokens=500, temperature=0.5)
+    description = f"[Jump to the start of the scene]({first_message_link})\n\n"
+    description += claude(content, max_tokens=500, temperature=0.5)
 
     embed = Embed(title="TL;DR", description=description)
+    
     summaryChannel = bot.get_channel(1237521328244789299)
+    # await ctx.send(embed=embed,hidden=True)
+    await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
     await summaryChannel.send(embed=embed)
     print("Scene summary delivered!")
+    return
 
 
 bot.run(discordKey)
