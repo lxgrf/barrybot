@@ -1,5 +1,3 @@
-import requests
-import json
 from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
 import keys
@@ -431,6 +429,7 @@ async def tldr(ctx: SlashContext):
     # If there are no messages at all, say so.
     channel = bot.get_channel(ctx.channel.id)
     messages = [message async for message in channel.history(limit=100)]
+    messages = messages[::-1]
     if len(messages) == 0:
         description = "No messages in this channel."
         embed = Embed(title="TL;DR", description=description)
@@ -440,20 +439,28 @@ async def tldr(ctx: SlashContext):
     # If the last message is from Avrae, remove it
     if messages[-1].author.name == "Avrae":
         messages.pop()
+
     # Find the most recent message from Avrae, and remove all messages before it
     print(len(messages))
+    new_messages = []
     for i in range(len(messages)):
         if messages[i].author.name == "Avrae":
             new_messages = messages[i:]
-    messages = new_messages
+    if len(new_messages) != 0:
+        messages = new_messages
 
     # Check all players present have opted in to the scene summary
+    
     opt_in_role = "Opt In"
     users_opted_in = dict()
     
     for message in messages:
         if "Avrae" not in [role.name for role in message.author.roles]:
             users_opted_in[message.author.id] = opt_in_role in [role.name for role in message.author.roles]
+        else:
+            print("Avrae shouldn't be picked up in the role check. Investigate why.")
+    
+    for message in messages: print(message.author)
     
     if all(users_opted_in.values()) == False:
         title = "Error - User not opted in."
@@ -461,7 +468,8 @@ async def tldr(ctx: SlashContext):
         embed = Embed(title=title, description=description)
         await ctx.send(embed=embed, hidden=True)
         return
-        
+    
+    
     # Now we have a list of messages from the most recent Avrae message to the present
     # Construct a single string from the messages. For each message, add the author's name and the message content
 
