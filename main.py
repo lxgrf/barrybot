@@ -75,6 +75,12 @@ tldr_excluded_channels = {
     1001193835835183174: [1044715490544734278,1044717853754019890,1044715531430797372], #Caddocia
 }
 
+tldr_additional_channels = {
+    866376531995918346:[], #Silverymoon
+    1114617197931790376: [], #Test Server
+    1001193835835183174: [1087062242056474765,1034466115037962311,1115703983256899615,1185359232229453834], #Caddocia
+}
+
 channeltimes = {
     866376531995918346 : {"yellow":7,"red":14}, # Silverymoon
     1001193835835183174: {"yellow":14,"red":31}, # Caddocia
@@ -409,7 +415,7 @@ async def tldr(ctx: SlashContext):
         await ctx.send(embed=embed,hidden=True)
         return
 
-    elif ctx.channel.id not in monitored_channels[ctx.guild.id]:
+    elif ctx.channel.id not in monitored_channels[ctx.guild.id] and ctx.channel.id not in tldr_additional_channels[ctx.guild.id]:
         title = "Error - Channel not monitored."
         description = f"This channel is not monitored for RP activity. Please contact `@lxgrf` if you believe this is in error."
         embed = Embed(title=title, description=description)
@@ -441,7 +447,6 @@ async def tldr(ctx: SlashContext):
         messages.pop()
 
     # Find the most recent message from Avrae, and remove all messages before it
-    print(len(messages))
     new_messages = []
     for i in range(len(messages)):
         if messages[i].author.name == "Avrae":
@@ -460,28 +465,18 @@ async def tldr(ctx: SlashContext):
         else:
             print("Avrae shouldn't be picked up in the role check. Investigate why.")
     
-    for message in messages: print(message.author)
-    
     if all(users_opted_in.values()) == False:
         title = "Error - User not opted in."
         description = f"AI Generated summaries require all participants in a scene to have the {opt_in_role} role. Please contact `@lxgrf` if you believe there is an error."
         embed = Embed(title=title, description=description)
         await ctx.send(embed=embed, hidden=True)
         return
-    
-    
-    # Now we have a list of messages from the most recent Avrae message to the present
-    # Construct a single string from the messages. For each message, add the author's name and the message content
-
-    # Get the link to the first message in the scene
-    first_message = messages[0]
-    first_message_link = first_message.jump_url
 
     content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
     for message in messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
-    description = f"[Jump to the start of the scene]({first_message_link})\n\n"
+    description = f"[Jump to the start of the scene]({messages[0].jump_url})\n\n"
     description += claude(content, max_tokens=500, temperature=0.5)
 
     embed = Embed(title="TL;DR", description=description)
