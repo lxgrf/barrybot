@@ -105,8 +105,8 @@ def _authorised_user():
 
 def claude_call(prompt, max_tokens=200, temperature=0.8):
     message = anthro.messages.create(
-        # model="claude-3-opus-20240229",
-        model = "claude-3-sonnet-20240229",
+        model="claude-3-opus-20240229",
+        # model = "claude-3-sonnet-20240229",
         max_tokens=max_tokens,
         temperature=temperature,
         messages=[
@@ -151,7 +151,7 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
     
-    description += f"\n\n{claude(prompt)}"
+    description += f"\n\n{claude_call(prompt)}"
 
     footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with Anthropic Claude."
     embed = Embed(title=title, description=description, footer=footer)
@@ -421,7 +421,7 @@ async def channelactivity(ctx: SlashContext):
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. (IN BETA)")
-async def tldr(ctx: SlashContext):
+async def tldr(ctx: SlashContext, option=""):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
@@ -485,6 +485,7 @@ async def tldr(ctx: SlashContext):
     #     await ctx.send(embed=embed, hidden=True)
     #     return
 
+
     content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
     for message in messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
@@ -495,10 +496,14 @@ async def tldr(ctx: SlashContext):
 
     embed = Embed(title="TL;DR", description=description)
     
-    summaryChannel = bot.get_channel(1237521328244789299)
-    await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
-    await summaryChannel.send(embed=embed)
-    print("Scene summary delivered!")
+    if option == "private":
+        await ctx.send(embed =embed,hidden=True)
+        print("Scene summary delivered privately.")
+    else:
+        summaryChannel = bot.get_channel(1237521328244789299)
+        await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
+        await summaryChannel.send(embed=embed)
+        print("Scene summary delivered!")
     return
 
 
