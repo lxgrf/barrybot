@@ -421,7 +421,7 @@ async def channelactivity(ctx: SlashContext):
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. (IN BETA)")
-async def tldr(ctx: SlashContext, option=""):
+async def tldr(ctx: SlashContext, StartMessageID=int,EndMessageID=int):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
