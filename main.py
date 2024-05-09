@@ -495,12 +495,13 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
             await ctx.send(embed=embed, hidden=True)
             return
         messages = [message async for message in channel.history(limit=1000)]
+        messages = messages[::-1]
         if startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
             description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly. Note this requires message IDs, not message links."
             embed = Embed(title="TL;DR", description=description)
             await ctx.send(embed=embed, hidden=True)
             return
-        messages = messages[::-1]
+
         for i, message in enumerate(messages):
             if message.id == startmessageid:
                 new_messages = messages[i:]
@@ -511,29 +512,34 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
                 break
 
     # Check all players present have opted in to the scene summary
-    
     opt_in_role = opt_in_roles[ctx.guild_id]
     authors = {message.author.id for message in new_messages}
 
     # Get list of users with opt_in_role
     opted_in = [user.id for user in ctx.guild.members if opt_in_role in [role.name for role in user.roles]]
 
+    #Remove from authors any id with the "Avrae" role
+    avrae = [user.id for user in ctx.guild.members if "Avrae" in [role.name for role in user.roles]]
+    authors = authors - set(avrae)
+
     # Check that all authors are in the opted_in list
     if any(author not in opted_in for author in authors):    
         title = "Error - User not opted in."
+        print([author for author in authors if author not in opted_in])
         description = f"AI Generated summaries require all participants in a scene to have the `{opt_in_role}` role. Please contact `@lxgrf` if you believe there is an error."
         embed = Embed(title=title, description=description)
         await ctx.send(embed=embed, hidden=True)
         return
 
     content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
-    for message in messages:
+    for message in new_messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
-    description = f"[Jump to the start of the scene]({messages[0].jump_url})\n\n"
+    description = f"[Jump to the start of the scene]({new_messages[0].jump_url})\n\n"
     description += claude_call(content, max_tokens=500, temperature=0.5)
 
     embed = Embed(title="TL;DR", description=description)
+
     summaryChannel = bot.get_channel(tldr_output_channels[ctx.guild_id])
     await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
     await summaryChannel.send(embed=embed)
