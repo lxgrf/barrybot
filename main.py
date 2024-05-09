@@ -518,9 +518,10 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
     # Get list of users with opt_in_role
     opted_in = [user.id for user in ctx.guild.members if opt_in_role in [role.name for role in user.roles]]
 
-    #Remove from authors any id with the "Avrae" role
-    avrae = [user.id for user in ctx.guild.members if "Avrae" in [role.name for role in user.roles]]
-    authors = authors - set(avrae)
+    #Remove from authors any id with the "Avrae" or "Bots" role
+    bot_roles = ["Avrae","Bots"]
+    bots = [user.id for user in ctx.guild.members if any(role in bot_roles for role in [role.name for role in user.roles])]
+    authors = authors - set(bots)
 
     # Check that all authors are in the opted_in list
     if any(author not in opted_in for author in authors):    
