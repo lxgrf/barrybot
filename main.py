@@ -32,6 +32,12 @@ warning_threshold = 14 # days
 
 authorised_roles = ["Helper","Dragonspeaker","Mods","Admin","Owner"]
 
+opt_in_roles = {
+    866376531995918346 : "AI Scene Summary Permission", # Silverymoon
+    1001193835835183174: "AI Approval", # Caddocia
+    1114617197931790376: "Owner", # Test Server
+}
+
 monitored_channels = {
     866376531995918346 : [ # Silverymoon
                         880874308556169327,923399076609933312,880874380517855282,912466473639878666,880883916779696188,
@@ -76,9 +82,17 @@ tldr_excluded_channels = {
 }
 
 tldr_additional_channels = {
-    866376531995918346:[], #Silverymoon
+    866376531995918346:[923663727394443284,990336609192906822,926378655091945482,1079463185712697464,1158841934345945248,990765159687532554,
+                        990320570233159740,929174188651085824,1039271164696084550,1023774505006542919,928093443706724352,928093568424349717,
+                        928120536859557928,1084512254147448902,948024606512521297], #Silverymoon
     1114617197931790376: [], #Test Server
-    1001193835835183174: [1087062242056474765,1034466115037962311,1115703983256899615,1185359232229453834], #Caddocia
+    1001193835835183174: [1087062242056474765,1034466115037962311,1115703983256899615,1185359232229453834,922383749281382400,1090358867797475348,], #Caddocia
+}
+
+tldr_output_channels = {
+    866376531995918346: 1031234608458641408, #Silverymoon
+    1114617197931790376: 0, #Test Server
+    1001193835835183174: 1237521328244789299, #Caddocia
 }
 
 channeltimes = {
@@ -499,7 +513,7 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
 
     # Check all players present have opted in to the scene summary
     
-    opt_in_role = "AI Approval"
+    opt_in_role = opt_in_roles[ctx.guild_id]
     users_opted_in = dict()
     
     for message in messages:
@@ -508,13 +522,12 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
         else:
             print("Avrae shouldn't be picked up in the role check. Investigate why.")
     
-    if all(users_opted_in.values()) == False:
+    if any(value == False for value in users_opted_in.values()):
         title = "Error - User not opted in."
         description = f"AI Generated summaries require all participants in a scene to have the `{opt_in_role}` role. Please contact `@lxgrf` if you believe there is an error."
         embed = Embed(title=title, description=description)
         await ctx.send(embed=embed, hidden=True)
         return
-
 
     content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
     for message in messages:
@@ -530,7 +543,7 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
         await ctx.send(embed =embed,hidden=True)
         print("Scene summary delivered privately.")
     else:
-        summaryChannel = bot.get_channel(1237521328244789299)
+        summaryChannel = bot.get_channel(tldr_output_channels[ctx.guild_id])
         await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
         await summaryChannel.send(embed=embed)
         print("Scene summary delivered!")
