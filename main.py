@@ -3,8 +3,6 @@ from discord_slash import SlashCommand, SlashContext
 import keys
 import datetime
 import anthropic
-from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
 
 discordKey = keys.discord
 openaiKey = keys.openai
@@ -14,8 +12,6 @@ mistralKey = keys.mistralai
 anthro = anthropic.Anthropic(
     api_key = anthropicKey
 )
-mistral = MistralClient(api_key=mistralKey)
-
 
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
@@ -421,7 +417,7 @@ async def channelactivity(ctx: SlashContext):
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. (IN BETA)")
-async def tldr(ctx: SlashContext, StartMessageID=int,EndMessageID=int):
+async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
@@ -455,7 +451,7 @@ async def tldr(ctx: SlashContext, StartMessageID=int,EndMessageID=int):
         return
     new_messages = []
 
-    if not (StartMessageID or EndMessageID):
+    if not (startmessageid or endmessageid):
         messages = [message async for message in channel.history(limit=200)]
         messages = messages[::-1]
         # If the last message is from Avrae, remove it
@@ -469,27 +465,35 @@ async def tldr(ctx: SlashContext, StartMessageID=int,EndMessageID=int):
         if len(new_messages) != 0:
             messages = new_messages
 
-    elif not (StartMessageID and EndMessageID):
+    elif not (startmessageid and endmessageid):
         description = "If no message IDs are provided, the bot will attempt to summarise the most recent scene in this channel. If _both_ are provided, the bot will attempt to summarise the scene in between them.\n\nNot sure what to do with only one message ID."
         embed = Embed(title="TL;DR", description=description)
         await ctx.send(embed=embed, hidden=True)
         return
 
-    elif StartMessageID not in [message.id for message in messages] or EndMessageID not in [message.id for message in messages]:
+    elif startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
         description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly. Note this requires message IDs, not message links."
         embed = Embed(title="TL;DR", description=description)
         await ctx.send(embed=embed, hidden=True)
         return
 
     else:
+        try:
+            startmessageid = int(startmessageid)
+            endmessageid = int(endmessageid)
+        except:
+            description = "Message IDs must be numbers. Please ensure you have copied them correctly."
+            embed = Embed(title="TL;DR", description=description)
+            await ctx.send(embed=embed, hidden=True)
+            return
         messages = [message async for message in channel.history(limit=1000)]
         messages = messages[::-1]
         for i, message in enumerate(messages):
-            if message.id == StartMessageID:
+            if message.id == startmessageid:
                 new_messages = messages[i:]
                 break
         for i, message in enumerate(new_messages):
-            if message.id == EndMessageID:
+            if message.id == endmessageid:
                 new_messages = new_messages[:i+1]
                 break
 
