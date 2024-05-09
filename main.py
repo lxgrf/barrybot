@@ -429,7 +429,7 @@ async def channelactivity(ctx: SlashContext):
         await ctx.send(embed=embed)
     return
 
-@slash.slash(name="tldr",description="Summarise the scene above. (IN BETA)")
+@slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality. If you want to summarise an older scene, get the message IDs of the start and end points, and supply them as the optional arguments.")
 async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
