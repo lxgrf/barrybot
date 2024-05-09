@@ -532,7 +532,7 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
         await ctx.send(embed=embed, hidden=True)
         return
 
-    content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics. Bullet point the key events in order.\n\n"
+    content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Give the scene a title. Avoid including any out-of-character information or references to Discord, or game mechanics. Bullet point the key events in order.\n\n"
     for message in new_messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
