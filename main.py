@@ -115,8 +115,8 @@ def _authorised_user():
 
 def claude_call(prompt, max_tokens=200, temperature=0.8):
     message = anthro.messages.create(
-        model="claude-3-opus-20240229",
-        # model = "claude-3-sonnet-20240229",
+        # model="claude-3-opus-20240229",
+        model = "claude-3-sonnet-20240229",
         max_tokens=max_tokens,
         temperature=temperature,
         messages=[
@@ -532,7 +532,7 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
         await ctx.send(embed=embed, hidden=True)
         return
 
-    content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
+    content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Avoid including any out-of-character information or references to Discord, or game mechanics. Bullet point the key events in order.\n\n"
     for message in new_messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
