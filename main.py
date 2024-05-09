@@ -538,6 +538,7 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
     
     description = f"[Jump to the start of the scene]({new_messages[0].jump_url})\n\n"
     description += claude_call(content, max_tokens=500, temperature=0.5)
+    description += f"\n\n{[f"<@{author}>\n" for author in authors]}"
 
     embed = Embed(title="TL;DR", description=description)
 
