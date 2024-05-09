@@ -430,7 +430,7 @@ async def channelactivity(ctx: SlashContext):
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality. If you want to summarise an older scene, get the message IDs of the start and end points, and supply them as the optional arguments.")
-async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
+async def tldr(ctx: SlashContext, scenetitle="", startmessageid="", endmessageid=""):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
@@ -532,13 +532,18 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
         await ctx.send(embed=embed, hidden=True)
         return
 
-    content = "The following is a roleplay scene from a game of D&D. Please create a concise summary of the scene, including the characters involved, the setting, and the main events. Give the scene a title. Avoid including any out-of-character information or references to Discord, or game mechanics. Bullet point the key events in order.\n\n"
+    if not scenetitle: 
+        scenetitle = "Give the scene a title"
+    else:
+        scenetitle = f"Title the scene: {title}"
+    
+    content = f"The following is a roleplay scene from a game of D&D. Please create a concise bullet-point summary of the scene, including the characters involved, the setting, and the main events. {scenetitle}. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
     for message in new_messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
     description = f"[Jump to the start of the scene]({new_messages[0].jump_url})\n\n"
     description += claude_call(content, max_tokens=500, temperature=0.5)
-    description += f"\n\n{[f"<@{author}>\n" for author in authors]}"
+    description += f"\n\n{' '.join([f'<@{author}>' for author in authors])}"
 
     embed = Embed(title="TL;DR", description=description)
 
