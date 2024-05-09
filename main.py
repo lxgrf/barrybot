@@ -484,22 +484,22 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
         await ctx.send(embed=embed, hidden=True)
         return
 
-    elif startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
-        description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly. Note this requires message IDs, not message links."
-        embed = Embed(title="TL;DR", description=description)
-        await ctx.send(embed=embed, hidden=True)
-        return
 
     else:
         try:
             startmessageid = int(startmessageid)
             endmessageid = int(endmessageid)
         except:
-            description = "Message IDs must be numbers. Please ensure you have copied them correctly."
+            description = "Message IDs should be numbers. Please ensure you have copied them correctly."
             embed = Embed(title="TL;DR", description=description)
             await ctx.send(embed=embed, hidden=True)
             return
         messages = [message async for message in channel.history(limit=1000)]
+        if startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
+            description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly. Note this requires message IDs, not message links."
+            embed = Embed(title="TL;DR", description=description)
+            await ctx.send(embed=embed, hidden=True)
+            return
         messages = messages[::-1]
         for i, message in enumerate(messages):
             if message.id == startmessageid:
@@ -513,15 +513,13 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
     # Check all players present have opted in to the scene summary
     
     opt_in_role = opt_in_roles[ctx.guild_id]
-    users_opted_in = dict()
-    
-    for message in messages:
-        if "Avrae" not in [role.name for role in message.author.roles]:
-            users_opted_in[message.author.id] = opt_in_role in [role.name for role in message.author.roles]
-        else:
-            print("Avrae shouldn't be picked up in the role check. Investigate why.")
-    
-    if any(value == False for value in users_opted_in.values()):
+    authors = {message.author.id for message in new_messages}
+
+    # Get list of users with opt_in_role
+    opted_in = [user.id for user in ctx.guild.members if opt_in_role in [role.name for role in user.roles]]
+
+    # Check that all authors are in the opted_in list
+    if any(author not in opted_in for author in authors):    
         title = "Error - User not opted in."
         description = f"AI Generated summaries require all participants in a scene to have the `{opt_in_role}` role. Please contact `@lxgrf` if you believe there is an error."
         embed = Embed(title=title, description=description)
