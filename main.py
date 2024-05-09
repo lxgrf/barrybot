@@ -371,7 +371,6 @@ async def channelactivity(ctx: SlashContext):
         channel = bot.get_channel(int(channel_id))
         messages = channel.history(limit=1)
         message = await messages.next()
-        # message = await channel.fetch_message(channel.last_message_id)
         messageTime = message.created_at
         timeElapsed = datetime.datetime.utcnow() - messageTime
         author = message.author
@@ -535,20 +534,11 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
     
     description = f"[Jump to the start of the scene]({messages[0].jump_url})\n\n"
     description += claude_call(content, max_tokens=500, temperature=0.5)
-    # description += mistral_call(content, max_tokens=500, temperature=0.5)
 
     embed = Embed(title="TL;DR", description=description)
-    
-    if option == "private":
-        await ctx.send(embed =embed,hidden=True)
-        print("Scene summary delivered privately.")
-    else:
-        summaryChannel = bot.get_channel(tldr_output_channels[ctx.guild_id])
-        await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
-        await summaryChannel.send(embed=embed)
-        print("Scene summary delivered!")
-    return
-
+    summaryChannel = bot.get_channel(tldr_output_channels[ctx.guild_id])
+    await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
+    await summaryChannel.send(embed=embed)
+    print("Scene summary delivered!")
 
 bot.run(discordKey)
-
