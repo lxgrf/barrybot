@@ -1,22 +1,18 @@
 from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
-import keys
 import datetime
 import anthropic
+from dotenv import load_dotenv
+import os
 
-discordKey = keys.discord
-openaiKey = keys.openai
-anthropicKey = keys.anthropic
-mistralKey = keys.mistralai
+load_dotenv()
 
 anthro = anthropic.Anthropic(
-    api_key = anthropicKey
+    api_key = os.getenv("anthropic")
 )
 
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True)
-url = 'https://api.openai.com/v1/chat/completions'
-headers = {'content-type': 'application/json', "Authorization":f"Bearer {openaiKey}"}
 
 guilds ={
     "1010366904612954203":"a fantasy city", # Test Server
@@ -194,7 +190,7 @@ async def solo(ctx: SlashContext, character, request=""):
 async def help(ctx: SlashContext):  
     await ctx.defer()
     title = "AI Suggestions Help"
-    description = "This bot generates scene ideas based on brief character descriptions you supply. It uses the OpenAI API to generate text, and the Discord API to send it to you."
+    description = "This bot generates scene ideas based on brief character descriptions you supply. It uses the Anthropic Claude API to generate text, and the Discord API to send it to you."
     description += "\nNote that any detail supplied may be used, so mentioning that your character is a thief ups the chances of the scene involving theft. Hold back detail you don't want to see."
     description += "\n\n## Commands"
     description += "\n`/scene` - Get a scene prompt! Describe the characters involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
@@ -552,4 +548,4 @@ async def tldr(ctx: SlashContext, scenetitle="", startmessageid="", endmessageid
     await summaryChannel.send(embed=embed)
     print("Scene summary delivered!")
 
-bot.run(discordKey)
+bot.run(os.getenv("discord"))
