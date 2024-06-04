@@ -560,7 +560,7 @@ async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
 @slash.slash(name="export",description="Export the scene above to a text file.",
              options=[manage_commands.create_option(name="startmessageid", description="Message ID of the start of the scene", option_type=3, required=False),
                       manage_commands.create_option(name="endmessageid", description="Message ID of the end of the scene", option_type=3, required=False)])
-async def tldr(ctx: SlashContext, startmessageid, endmessageid):
+async def export(ctx: SlashContext, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     # Get channel messages since the most recent Avrae message.
     # If the last message was from Avrae, ignore it.
