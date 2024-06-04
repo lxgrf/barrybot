@@ -1,4 +1,4 @@
-from discord import Client, Intents, Embed
+from discord import Client, Intents, Embed, File
 from discord_slash import SlashCommand, SlashContext, manage_commands
 
 import datetime
@@ -626,7 +626,7 @@ async def tldr(ctx: SlashContext, startmessageid, endmessageid):
     with open(filename, "w") as file:
         for message in new_messages:
             file.write(f"{message.author.name}\n-----\n {message.content}\n===============\n")
-    await ctx.send(title="Scene Export", description="Find your scene attached!", file=discord.File(filename), hidden=True)
+    await ctx.send(title="Scene Export", description="Find your scene attached!", file=File(filename), hidden=True)
     return
 
 bot.run(os.getenv("discord"))
