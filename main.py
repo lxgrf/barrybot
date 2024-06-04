@@ -1,5 +1,6 @@
 from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
+
 import datetime
 import anthropic
 from dotenv import load_dotenv
@@ -140,7 +141,10 @@ def mistral_call(prompt, max_tokens=200, temperature=0.8):
 
 
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
-async def scene(ctx: SlashContext, character1, character2, request=""):
+@option("character1",str,description="Details of a character in the scene - the more the better",)
+@option("character2",str,description="Details of a second character in the scene - the more the better",)
+@option("request",str,description="Any specific requests for the scene prompt.",default="")
+async def scene(ctx: SlashContext,character1,character2,request):
     await ctx.defer()
     description = ""
     if str(ctx.guild.id) not in guilds:
@@ -164,7 +168,9 @@ async def scene(ctx: SlashContext, character1, character2, request=""):
     await ctx.send(embed=embed)
 
 @slash.slash(name="solo", description="Get a solo prompt! Describe the character involved specifying any relevant detail.")
-async def solo(ctx: SlashContext, character, request=""):
+@option("character",str,description="Details of a character in the scene - the more the better",)
+@option("request",str,description="Any specific requests for the scene prompt.",default="")
+async def solo(ctx: SlashContext,character,request):
     await ctx.defer()
     description = ""
     if str(ctx.guild.id) not in guilds:
@@ -426,11 +432,10 @@ async def channelactivity(ctx: SlashContext):
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality. If you want to summarise an older scene, get the message IDs of the start and end points, and supply them as the optional arguments.")
-async def tldr(ctx: SlashContext, 
-                    scenetitle: str = commands.Option(description="Title for the scene"),
-                    startmessageid: str = commands.Option(description="Message ID of the start of the scene"),
-                    endmessageid: str = commands.Option(description="Message ID of the end of the scene"),
-               ):
+@option("scenetitle",str,description="Title for the scene, if preferred",default="")
+@option("startmessageid",str,description="Message ID of the start of the scene",default="")
+@option("endmessageid",str,description="Message ID of the end of the scene",default="")
+async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
@@ -553,10 +558,9 @@ async def tldr(ctx: SlashContext,
     print("Scene summary delivered!")
 
 @slash.slash(name="export",description="Export the scene above to a text file.")
-async def tldr(ctx: SlashContext,
-                     startmessageid: str = commands.Option(description="Message ID of the start of the scene"),
-                     endmessageid: int = commands.Option(description="Message ID of the end of the scene"),
-            ):
+@option("startmessageid",str,description="Message ID of the start of the scene",default="")
+@option("endmessageid",int,description="Message ID of the end of the scene",default="")
+async def tldr(ctx: SlashContext, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     # Get channel messages since the most recent Avrae message.
     # If the last message was from Avrae, ignore it.
