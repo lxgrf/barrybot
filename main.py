@@ -615,7 +615,7 @@ async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
     with open(filename, "w") as file:
         for message in new_messages:
             file.write(f"{message.author.name}\n-----\n {message.content}\n===============\n")
-    await ctx.send(file=discord.File(filename), hidden=True)
+    await ctx.send(title="Scene Export", description="Find your scene attached!", file=discord.File(filename), hidden=True)
     return
 
 bot.run(os.getenv("discord"))
