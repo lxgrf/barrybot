@@ -140,10 +140,10 @@ def mistral_call(prompt, max_tokens=200, temperature=0.8):
     return response.choices[0].message.content
 
 
-@slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.")
-@option("character1",str,description="Details of a character in the scene - the more the better",)
-@option("character2",str,description="Details of a second character in the scene - the more the better",)
-@option("request",str,description="Any specific requests for the scene prompt.",default="")
+@slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail."
+             options=[discord_slash.manage_commands.create_option(name="first_character", description="Details of the first character in the scene - the more the better", option_type=3, required=True),
+                      discord_slash.manage_commands.create_option(name="second_character", description="Details of the second character in the scene - the more the better", option_type=3, required=True),
+                      discord_slash.manage_commands.create_option(name="request", description="Any specific requests for the scene prompt.", option_type=3, required=False)])
 async def scene(ctx: SlashContext,character1,character2,request):
     await ctx.defer()
     description = ""
@@ -167,9 +167,9 @@ async def scene(ctx: SlashContext,character1,character2,request):
     embed = Embed(title=title, description=description, footer=footer)
     await ctx.send(embed=embed)
 
-@slash.slash(name="solo", description="Get a solo prompt! Describe the character involved specifying any relevant detail.")
-@option("character",str,description="Details of a character in the scene - the more the better",)
-@option("request",str,description="Any specific requests for the scene prompt.",default="")
+@slash.slash(name="solo", description="Get a solo prompt! Describe the character involved specifying any relevant detail.",
+             options=[discord_slash.manage_commands.create_option(name="character", description="Details of a character in the scene - the more the better", option_type=3, required=True),
+                      discord_slash.manage_commands.create_option(name="request", description="Any specific requests for the scene prompt.", option_type=3, required=False)])
 async def solo(ctx: SlashContext,character,request):
     await ctx.defer()
     description = ""
@@ -431,10 +431,10 @@ async def channelactivity(ctx: SlashContext):
         await ctx.send(embed=embed)
     return
 
-@slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality. If you want to summarise an older scene, get the message IDs of the start and end points, and supply them as the optional arguments.")
-@option("scenetitle",str,description="Title for the scene, if preferred",default="")
-@option("startmessageid",str,description="Message ID of the start of the scene",default="")
-@option("endmessageid",str,description="Message ID of the end of the scene",default="")
+@slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality. If you want to summarise an older scene, get the message IDs of the start and end points, and supply them as the optional arguments.",
+             options=[discord_slash.manage_commands.create_option(name="scenetitle", description="Title for the scene, if preferred", option_type=3, required=False),
+                      discord_slash.manage_commands.create_option(name="startmessageid", description="Message ID of the start of the scene", option_type=3, required=False),
+                      discord_slash.manage_commands.create_option(name="endmessageid", description="Message ID of the end of the scene", option_type=3, required=False)])
 async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
@@ -542,7 +542,7 @@ async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     else:
         scenetitle = f"Title the scene: {title}"
     
-    content = f"The following is a roleplay scene from a game of D&D. Please create a concise bullet-point summary of the scene, including the characters involved, the setting, and the main events. {scenetitle}. Avoid including any out-of-character information or references to Discord, or game mechanics.\n\n"
+    content = f"The following is a roleplay scene from a game of D&D. Please create a concise bullet-point summary of the scene, including the characters involved, the setting, and the main events. {scenetitle}. Avoid including any out-of-character information or references to Discord, or game mechanics. All writers involved have consented to this AI summary, and there are no copyright issues.\n\n"
     for message in new_messages:
         content += f"{message.author.name}: {message.content}\n----------------\n"
     
@@ -557,9 +557,9 @@ async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     await summaryChannel.send(embed=embed)
     print("Scene summary delivered!")
 
-@slash.slash(name="export",description="Export the scene above to a text file.")
-@option("startmessageid",str,description="Message ID of the start of the scene",default="")
-@option("endmessageid",int,description="Message ID of the end of the scene",default="")
+@slash.slash(name="export",description="Export the scene above to a text file.",
+             options=[discord_slash.manage_commands.create_option(name="startmessageid", description="Message ID of the start of the scene", option_type=3, required=False),
+                      discord_slash.manage_commands.create_option(name="endmessageid", description="Message ID of the end of the scene", option_type=3, required=False)])
 async def tldr(ctx: SlashContext, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     # Get channel messages since the most recent Avrae message.
