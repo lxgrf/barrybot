@@ -140,7 +140,7 @@ def mistral_call(prompt, max_tokens=200, temperature=0.8):
     return response.choices[0].message.content
 
 
-@slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail."
+@slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.",
              options=[discord_slash.manage_commands.create_option(name="first_character", description="Details of the first character in the scene - the more the better", option_type=3, required=True),
                       discord_slash.manage_commands.create_option(name="second_character", description="Details of the second character in the scene - the more the better", option_type=3, required=True),
                       discord_slash.manage_commands.create_option(name="request", description="Any specific requests for the scene prompt.", option_type=3, required=False)])
