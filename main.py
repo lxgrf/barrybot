@@ -426,7 +426,11 @@ async def channelactivity(ctx: SlashContext):
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality. If you want to summarise an older scene, get the message IDs of the start and end points, and supply them as the optional arguments.")
-async def tldr(ctx: SlashContext, scenetitle="", startmessageid="", endmessageid=""):
+async def tldr(ctx: SlashContext, 
+                    scenetitle: str = commands.Option(description="Title for the scene"),
+                    startmessageid: str = commands.Option(description="Message ID of the start of the scene"),
+                    endmessageid: str = commands.Option(description="Message ID of the end of the scene"),
+               ):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
@@ -549,9 +553,12 @@ async def tldr(ctx: SlashContext, scenetitle="", startmessageid="", endmessageid
     print("Scene summary delivered!")
 
 @slash.slash(name="export",description="Export the scene above to a text file.")
-async def tldr(ctx: SlashContext, startmessageid="", endmessageid=""):
+async def tldr(ctx: SlashContext,
+                     startmessageid: str = commands.Option(description="Message ID of the start of the scene"),
+                     endmessageid: int = commands.Option(description="Message ID of the end of the scene"),
+            ):
     await ctx.defer(hidden=True)
-       # Get channel messages since the most recent Avrae message.
+    # Get channel messages since the most recent Avrae message.
     # If the last message was from Avrae, ignore it.
     # If there are no messages from Avrae, go back to the start of the channel
     # If there are no messages at all, say so.
