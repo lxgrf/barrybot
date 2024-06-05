@@ -431,10 +431,10 @@ async def channelactivity(ctx: SlashContext):
         await ctx.send(embed=embed)
     return
 
-@slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality. If you want to summarise an older scene, get the message IDs of the start and end points, and supply them as the optional arguments.",
+@slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality.",
              options=[manage_commands.create_option(name="scenetitle", description="Title for the scene, if preferred", option_type=3, required=False),
-                      manage_commands.create_option(name="startmessageid", description="Message ID of the start of the scene", option_type=3, required=False),
-                      manage_commands.create_option(name="endmessageid", description="Message ID of the end of the scene", option_type=3, required=False)])
+                      manage_commands.create_option(name="startmessageid", description="Message ID or link for the start of the scene", option_type=3, required=False),
+                      manage_commands.create_option(name="endmessageid", description="Message ID or link for the end of the scene", option_type=3, required=False)])
 async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
@@ -484,25 +484,27 @@ async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
             messages = new_messages
 
     elif not (startmessageid and endmessageid):
-        description = "If no message IDs are provided, the bot will attempt to summarise the most recent scene in this channel. If _both_ are provided, the bot will attempt to summarise the scene in between them.\n\nNot sure what to do with only one message ID."
+        description = "If no message IDs/Links are provided, the bot will attempt to summarise the most recent scene in this channel. If _both_ are provided, the bot will attempt to summarise the scene in between them.\n\nNot sure what to do with only one message ID."
         embed = Embed(title="TL;DR", description=description)
         await ctx.send(embed=embed, hidden=True)
         return
 
-
     else:
         try:
+            if "discord" in startmessageid: startmessageid = startmessageid.split("/")[-1]
+            if "discord" in endmessageid: endmessageid = endmessageid.split("/")[-1]
             startmessageid = int(startmessageid)
             endmessageid = int(endmessageid)
         except:
-            description = "Message IDs should be numbers. Please ensure you have copied them correctly."
-            embed = Embed(title="TL;DR", description=description)
+            description = "Message IDs/Links should be numbers or URLs. Please ensure you have copied them correctly."
+            embed = Embed(title="Export", description=description)
             await ctx.send(embed=embed, hidden=True)
             return
+            
         messages = [message async for message in channel.history(limit=1000)]
         messages = messages[::-1]
         if startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
-            description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly. Note this requires message IDs, not message links."
+            description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly."
             embed = Embed(title="TL;DR", description=description)
             await ctx.send(embed=embed, hidden=True)
             return
@@ -558,9 +560,9 @@ async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     print("Scene summary delivered!")
 
 @slash.slash(name="export",description="Export the scene above to a text file.",
-             options=[manage_commands.create_option(name="startmessageid", description="Message ID of the start of the scene", option_type=3, required=False),
-                      manage_commands.create_option(name="endmessageid", description="Message ID of the end of the scene", option_type=3, required=False)])
-async def export(ctx: SlashContext, startmessageid, endmessageid):
+             options=[manage_commands.create_option(name="startmessageid", description="Message ID or Link for the start of the scene", option_type=3, required=False),
+                      manage_commands.create_option(name="endmessageid", description="Message ID or Link for the end of the scene", option_type=3, required=False)])
+async def export(ctx: SlashContext, startmessageid="", endmessageid=""):
     await ctx.defer(hidden=True)
     # Get channel messages since the most recent Avrae message.
     # If the last message was from Avrae, ignore it.
@@ -570,13 +572,13 @@ async def export(ctx: SlashContext, startmessageid, endmessageid):
     messages = [message async for message in channel.history(limit=1)]
     if len(messages) == 0:
         description = "No messages in this channel."
-        embed = Embed(title="TL;DR", description=description)
+        embed = Embed(title="Export", description=description)
         await ctx.send(embed=embed, hidden=True)
         return
     new_messages = []
 
     if not (startmessageid or endmessageid):
-        messages = [message async for message in channel.history(limit=200)]
+        messages = [message async for message in channel.history(limit=10000)]
         messages = messages[::-1]
         # If the last message is from Avrae, remove it
         if messages[-1].author.name == "Avrae":
@@ -590,25 +592,27 @@ async def export(ctx: SlashContext, startmessageid, endmessageid):
             messages = new_messages
 
     elif not (startmessageid and endmessageid):
-        description = "If no message IDs are provided, the bot will export the most recent scene in this channel. If _both_ are provided, the bot will export the scene in between them.\n\nNot sure what to do with only one message ID."
-        embed = Embed(title="TL;DR", description=description)
+        description = "If no message IDs or Links are provided, the bot will export the most recent scene in this channel. If _both_ are provided, the bot will export the scene in between them.\n\nNot sure what to do with only one message ID."
+        embed = Embed(title="Export", description=description)
         await ctx.send(embed=embed, hidden=True)
         return
 
-
     else:
         try:
+            if "discord" in startmessageid: startmessageid = startmessageid.split("/")[-1]
+            if "discord" in endmessageid: endmessageid = endmessageid.split("/")[-1]
             startmessageid = int(startmessageid)
             endmessageid = int(endmessageid)
         except:
-            description = "Message IDs should be numbers. Please ensure you have copied them correctly."
-            embed = Embed(title="TL;DR", description=description)
+            description = "Message IDs/Links should be numbers or URLs. Please ensure you have copied them correctly."
+            embed = Embed(title="Export", description=description)
             await ctx.send(embed=embed, hidden=True)
             return
-        messages = [message async for message in channel.history(limit=1000)]
+
+        messages = [message async for message in channel.history(limit=10000)]
         messages = messages[::-1]
         if startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
-            description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly. Note this requires message IDs, not message links."
+            description = "The start and end messages for this scene could not be found. Please ensure they are in this channel and copied correctly."
             embed = Embed(title="TL;DR", description=description)
             await ctx.send(embed=embed, hidden=True)
             return
@@ -626,7 +630,7 @@ async def export(ctx: SlashContext, startmessageid, endmessageid):
     with open(filename, "w") as file:
         for message in new_messages:
             file.write(f"{message.author.name}\n-----\n {message.content}\n===============\n")
-    await ctx.send(title="Scene Export", description="Find your scene attached!", file=File(filename), hidden=True)
+    await ctx.send(file=File(filename), hidden=True)
     return
 
 bot.run(os.getenv("discord"))
