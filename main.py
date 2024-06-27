@@ -161,7 +161,7 @@ async def scene(ctx: SlashContext,first_character,second_character,request=""):
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
     
-    description += f"\n\n{claude_call(prompt)}"
+    description += f"\n\n{claude_call(prompt,max_tokens=350)}"
 
     footer = f"/scene | Request your own scene prompt! Prompts are AI-generated, so feel free to change or ignore any detail. It's your scene! Generated with Anthropic Claude."
     embed = Embed(title=title, description=description, footer=footer)
