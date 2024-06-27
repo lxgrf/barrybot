@@ -144,7 +144,7 @@ def mistral_call(prompt, max_tokens=200, temperature=0.8):
              options=[manage_commands.create_option(name="first_character", description="Details of the first character in the scene - the more the better", option_type=3, required=True),
                       manage_commands.create_option(name="second_character", description="Details of the second character in the scene - the more the better", option_type=3, required=True),
                       manage_commands.create_option(name="request", description="Any specific requests for the scene prompt.", option_type=3, required=False)])
-async def scene(ctx: SlashContext,first_character,second_character,request):
+async def scene(ctx: SlashContext,first_character,second_character,request=""):
     await ctx.defer()
     description = ""
     if str(ctx.guild.id) not in guilds:
@@ -170,7 +170,7 @@ async def scene(ctx: SlashContext,first_character,second_character,request):
 @slash.slash(name="solo", description="Get a solo prompt! Describe the character involved specifying any relevant detail.",
              options=[manage_commands.create_option(name="character", description="Details of a character in the scene - the more the better", option_type=3, required=True),
                       manage_commands.create_option(name="request", description="Any specific requests for the scene prompt.", option_type=3, required=False)])
-async def solo(ctx: SlashContext,character,request):
+async def solo(ctx: SlashContext,character,request=""):
     await ctx.defer()
     description = ""
     if str(ctx.guild.id) not in guilds:
