@@ -144,19 +144,19 @@ def mistral_call(prompt, max_tokens=200, temperature=0.8):
              options=[manage_commands.create_option(name="first_character", description="Details of the first character in the scene - the more the better", option_type=3, required=True),
                       manage_commands.create_option(name="second_character", description="Details of the second character in the scene - the more the better", option_type=3, required=True),
                       manage_commands.create_option(name="request", description="Any specific requests for the scene prompt.", option_type=3, required=False)])
-async def scene(ctx: SlashContext,character1,character2,request):
+async def scene(ctx: SlashContext,first_character,second_character,request):
     await ctx.defer()
     description = ""
     if str(ctx.guild.id) not in guilds:
         embed = _server_error(ctx)
         await ctx.send(embed=embed)
-    elif len(character1.split(" ")) < 5 or len(character2.split(" ")) < 5:
+    elif len(first_character.split(" ")) < 5 or len(second_character.split(" ")) < 5:
         description += "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`. I have done my best, but the scene I have generated may not fit your expectations.\n\n"
     
     title = "Here is your scene prompt!"
     city = guilds[str(ctx.guild.id)]
-    description += f"**First character**: `{character1}`\n**Second character**: `{character2}`"
-    prompt = f"You are a D&D Dungeonmaster. Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in {city}. The first character is {character1}, and the second character is {character2}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than four bullet points."
+    description += f"**First character**: `{first_character}`\n**Second character**: `{second_character}`"
+    prompt = f"You are a D&D Dungeonmaster. Give a concise bullet-point summary of an idea for a low-stakes encounter, for a roleplay scene between two D&D characters in {city}. The first character is {first_character}, and the second character is {second_character}. Avoid creating backstory for these characters, as they are pre-existing. Describe the initial inciting incident only, and not what happens next. No more than four bullet points."
     if request != "": 
         prompt += f" {request}."
         description += f"\n**Request**: `{request}`"
@@ -202,8 +202,8 @@ async def help(ctx: SlashContext):
     description += "\n`/scene` - Get a scene prompt! Describe the characters involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
     description += "\n`/solo` - Get a solo prompt! Describe the character involved specifying any relevant detail. Add a request to the end of your description to get a prompt with a specific focus - something you want to come up, or _not_ come up, or a specific setting, etc."
     description += "\n\n## Example Usage"
-    description += "\n\n**Bad Usage**:\n `/scene character1:Dave, character2:Geraldine`\n It might be clear to you who Dave and Geraldine are, but the bot doesn't know. It will do its best, but will generate a prompt that may not fit your expectations."
-    description += "\n\n**Good Usage**:\n `/scene character1:Dave, a retired carpenter who wants to reconcile with his estranged daughter but is too proud to admit fault, character 2:Geraldine, Dave's daughter, who is a successful merchant and has no time for her father's nonsense`\n This description is much more detailed, and the bot will be able to generate a prompt that fits your expectations."
+    description += "\n\n**Bad Usage**:\n `/scene first_character:Dave, second_character:Geraldine`\n It might be clear to you who Dave and Geraldine are, but the bot doesn't know. It will do its best, but will generate a prompt that may not fit your expectations."
+    description += "\n\n**Good Usage**:\n `/scene first_character:Dave, a retired carpenter who wants to reconcile with his estranged daughter but is too proud to admit fault, character 2:Geraldine, Dave's daughter, who is a successful merchant and has no time for her father's nonsense`\n This description is much more detailed, and the bot will be able to generate a prompt that fits your expectations."
     description += f"\n\nThe bot is currently in beta, using Anthropic's Claudea, so please report any bugs or suggestions to @lxgrf. \n\n`Guild ID: {ctx.guild.id}`"
     embed = Embed(title=title, description=description)
     await ctx.send(embed=embed)
