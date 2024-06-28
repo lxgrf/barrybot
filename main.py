@@ -113,7 +113,8 @@ def _authorised_user():
 def claude_call(prompt, max_tokens=200, temperature=0.8):
     message = anthro.messages.create(
         # model="claude-3-opus-20240229",
-        model = "claude-3-sonnet-20240229",
+        # model = "claude-3-sonnet-20240229",
+        model = "claude-3-5-sonnet-20240620"
         max_tokens=max_tokens,
         temperature=temperature,
         messages=[
