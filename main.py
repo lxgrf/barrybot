@@ -430,6 +430,10 @@ async def channelactivity(ctx: SlashContext):
         description += "```"
         embed = Embed(title="Ping Post", description=description)
         await ctx.send(embed=embed)
+    else:
+        description = "Good news! No stale channels were found. Everyone is playing nicely!"
+        embed = Embed(title="Ping Post", description=description)
+        await ctx.send(embed=embed)
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality.",
