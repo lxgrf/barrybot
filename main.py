@@ -140,6 +140,15 @@ def mistral_call(prompt, max_tokens=200, temperature=0.8):
         )
     return response.choices[0].message.content
 
+async def get_recent_messages_reversed(channel, limit=25, oldest_first=False):
+    # First, get the most recent 'limit' messages
+    recent_messages = []
+    async for message in channel.history(limit=limit):
+        recent_messages.append(message)
+    # Then reverse this list
+    if oldest_first:
+        recent_messages[::-1]
+    return recent_messages
 
 @slash.slash(name="scene", description="Get a scene prompt! Describe the characters involved specifying any relevant detail.",
              options=[manage_commands.create_option(name="first_character", description="Details of the first character in the scene - the more the better", option_type=3, required=True),
@@ -411,15 +420,15 @@ async def channelactivity(ctx: SlashContext):
     if len(stale) > 0:
         description = "Copy and past the below for your weekly pinging needs\n\n"
         description += "```\n## Weekly pings!\nAs usual, this is a friendly check in on those scenes which seem to be slowing down. How's it going? How's life? Are you both communicating and happy with the pace of things? Do you need any help or hand from anyone?\n"
-        stalepoint = datetime.datetime.utcnow() - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"])
-        further_back = datetime.datetime.utcnow() - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"]*6)
+        # stalepoint = datetime.datetime.utcnow() - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"])
+        # further_back = datetime.datetime.utcnow() - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"]*6)
         
 
         for channel_id in stale:
             users = []
             channel = bot.get_channel(int(channel_id))
-            message_history = channel.history(limit=25, before=stalepoint, after=further_back)
-            async for message in message_history:
+            message_history = await get_recent_messages_reversed(channel)
+            for message in message_history:
                 if message.author.name == "Avrae":
                     break
                 elif message.author.id not in users:
