@@ -6,6 +6,10 @@ import anthropic
 from dotenv import load_dotenv
 import os
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 
 anthro = anthropic.Anthropic(
@@ -582,16 +586,17 @@ async def export(ctx: SlashContext, startmessageid="", endmessageid=""):
     # If the last message was from Avrae, ignore it.
     # If there are no messages from Avrae, go back to the start of the channel
     # If there are no messages at all, say so.
-    channel = bot.get_channel(ctx.channel.id)
-    messages = [message async for message in channel.history(limit=1)]
-    if len(messages) == 0:
-        description = "No messages in this channel."
-        embed = Embed(title="Export", description=description)
-        await ctx.send(embed=embed, hidden=True)
-        return
-    new_messages = []
+
 
     if not (startmessageid or endmessageid):
+        channel = bot.get_channel(ctx.channel.id)
+        messages = [message async for message in channel.history(limit=1)]
+        if len(messages) == 0:
+            description = "No messages in this channel."
+            embed = Embed(title="Export", description=description)
+            await ctx.send(embed=embed, hidden=True)
+            return
+        new_messages = []
         messages = [message async for message in channel.history(limit=10000)]
         messages = messages[::-1]
         # If the last message is from Avrae, remove it
@@ -613,8 +618,14 @@ async def export(ctx: SlashContext, startmessageid="", endmessageid=""):
 
     else:
         try:
-            if "discord" in startmessageid: startmessageid = startmessageid.split("/")[-1]
-            if "discord" in endmessageid: endmessageid = endmessageid.split("/")[-1]
+            if "discord" in startmessageid: 
+                channelid = startmessageid.split("/")[-2]
+                startmessageid = startmessageid.split("/")[-1]
+            if "discord" in endmessageid: 
+                if channelid != endmessageid.split("/")[-2]:
+                    embed = Embed(title="Export", description = "Start and end messages need to both be in the same channel, for obvious reasons.")
+                    await ctx.send(embed=embed, hidden=True)
+                endmessageid = endmessageid.split("/")[-1]
             startmessageid = int(startmessageid)
             endmessageid = int(endmessageid)
         except:
@@ -623,6 +634,25 @@ async def export(ctx: SlashContext, startmessageid="", endmessageid=""):
             await ctx.send(embed=embed, hidden=True)
             return
 
+        try:
+            channel = await bot.fetch_channel(channelid)
+            logger.info(f"Successfully fetched channel: {channel.id} ({channel.name})")
+        except discord.NotFound:
+            logger.error(f"Channel with ID {channelid} not found")
+            await ctx.send(embed=discord.Embed(title="Export", description="The specified channel could not be found."), hidden=True)
+            return
+        except discord.Forbidden:
+            logger.error(f"Bot doesn't have permission to access channel with ID {channelid}")
+            await ctx.send(embed=discord.Embed(title="Export", description="I don't have permission to access the specified channel."), hidden=True)
+            return
+
+        messages = [message async for message in channel.history(limit=1)]
+        if len(messages) == 0:
+            description = "No messages in this channel."
+            embed = Embed(title="Export", description=description)
+            await ctx.send(embed=embed, hidden=True)
+            return
+        new_messages = []
         messages = [message async for message in channel.history(limit=10000)]
         messages = messages[::-1]
         if startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
