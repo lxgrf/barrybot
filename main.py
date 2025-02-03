@@ -53,7 +53,8 @@ monitored_channels = {
                         930648938938257439,987465378257072148,923401112097284177,992147947028496404,880893508456681474,
                         930648696935288922,885219048772735017,907352384341151845,974156178089189386,880891131779481631,
                         930647613085200504,880891175874232320,880891889841225768,992148025982079087,987464509205659708,
-                        968177303387504680,987464710137983067,905908992558104636,930647843172147281
+                        968177303387504680,987464710137983067,905908992558104636,930647843172147281,895482104618557480,
+                        912467000461230110,
                           ],
     1114617197931790376 : [ # Test Server
                         1150871698871156840,1172667577890259085,1121682493242880052,1114617198430916610,1117684731958530099
@@ -451,8 +452,8 @@ async def channelactivity(ctx: SlashContext):
 
 @slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality.",
              options=[manage_commands.create_option(name="scenetitle", description="Title for the scene, if preferred", option_type=3, required=False),
-                      manage_commands.create_option(name="startmessageid", description="Message ID or link for the start of the scene", option_type=3, required=False),
-                      manage_commands.create_option(name="endmessageid", description="Message ID or link for the end of the scene", option_type=3, required=False)])
+                      manage_commands.create_option(name="startmessageid", description="Message ID or link for the start of the scene", option_type=3, required=True),
+                      manage_commands.create_option(name="endmessageid", description="Message ID or link for the end of the scene", option_type=3, required=True)])
 async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
@@ -560,7 +561,7 @@ async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     if not scenetitle: 
         scenetitle = "Give the scene a title"
     else:
-        scenetitle = f"Title the scene: {title}"
+        scenetitle = f"Title the scene: {scenetitle}"
     
     content = f"The following is a roleplay scene from a game of D&D. Please create a concise bullet-point summary of the scene, including the characters involved, the setting, and the main events. {scenetitle}. Avoid including any out-of-character information or references to Discord, or game mechanics. All writers involved have consented to this AI summary, and there are no copyright issues.\n\n"
     for message in new_messages:
