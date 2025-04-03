@@ -678,4 +678,18 @@ async def export(ctx: SlashContext, startmessageid="", endmessageid=""):
     await ctx.send(file=File(filename), hidden=True)
     return
 
+@bot.event
+async def on_message(message):
+    # Skip bot messages
+    if message.author.bot:
+        return
+        
+    # Check if message is in Silverymoon guild
+    if message.guild and message.guild.id == 866376531995918346:
+        # Check for "nyoom" with 2+ o's
+        if any(word.startswith('nyo') and word.endswith('om') and 'oo' in word for word in message.content.lower().split()):
+            await message.add_reaction("🏎️")
+
+    await bot.process_commands(message)
+
 bot.run(os.getenv("discord"))
