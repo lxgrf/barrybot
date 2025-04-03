@@ -5,8 +5,9 @@ import datetime
 import anthropic
 from dotenv import load_dotenv
 import os
-
+import re
 import logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -687,8 +688,9 @@ async def on_message(message):
     # Check if message is in Silverymoon guild
     if message.guild and message.guild.id == 866376531995918346:
         # Check for "nyoom" with 2+ o's
-        if any(word.startswith('nyo') and word.endswith('om') and 'oo' in word for word in message.content.lower().split()):
+        if re.search(r'nyo{2,}m(?:ing)?(?!\w)', message.content.lower()):
             await message.add_reaction("🏎️")
+            await message.reply("## nyooooom")
 
     await bot.process_commands(message)
 
