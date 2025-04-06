@@ -690,7 +690,7 @@ async def on_message(message):
         # Check for "nyoom" with 2+ o's
         if re.search(r'nyo{2,}m', message.content.lower()):
             await message.add_reaction("🏎️")
-            await message.reply("## nyooooom")
+            await message.reply("## 🏎️ nyooooom 🏎️")
 
     await bot.process_commands(message)
 
