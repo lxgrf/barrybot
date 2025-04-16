@@ -688,7 +688,7 @@ async def on_message(message):
     # Check if message is in Silverymoon guild
     if message.guild and message.guild.id == 866376531995918346:
         # Check for "nyoom" with 2+ o's
-        if re.search(r'nyo{2,}m', message.content.lower()):
+        if re.search(r'ny{1,}o{2,}m', message.content.lower()):
             await message.add_reaction("🏎️")
             await message.reply("## 🏎️ nyooooom 🏎️")
 
