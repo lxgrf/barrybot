@@ -1,5 +1,6 @@
 from discord import Client, Intents, Embed, File
 from discord_slash import SlashCommand, SlashContext, manage_commands
+from discord.ext import commands
 
 import datetime
 import anthropic
@@ -18,7 +19,7 @@ anthro = anthropic.Anthropic(
 )
 
 bot = Client(intents=Intents.all())
-slash = SlashCommand(bot, sync_commands=True)
+slash = SlashCommand(bot, sync_commands=True, sync_on_cog_reload=True)
 
 guilds ={
     "1010366904612954203":"a fantasy city", # Test Server
@@ -50,7 +51,7 @@ monitored_channels = {
                         968247884992618516,990096024171323464,987466249107816528,880889305881534475,923400219427758151,
                         880877522500341802,939969468740804659,987465629818847304,987473574271004682,885219090883571742,
                         907352356226736128,974155308895186984,880874583840931890,939970472462921808,968247977510576240,
-                        880874392316420117,885377822426791966,880885934793588786,880889751400513576,923400462013693972,
+                        880874392316420117,885377822426791966,880885934793588786,880889751400513576,923400462013693972,    
                         930648938938257439,987465378257072148,923401112097284177,992147947028496404,880893508456681474,
                         930648696935288922,885219048772735017,907352384341151845,974156178089189386,880891131779481631,
                         930647613085200504,880891175874232320,880891889841225768,992148025982079087,987464509205659708,
@@ -452,9 +453,11 @@ async def channelactivity(ctx: SlashContext):
     return
 
 @slash.slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality.",
-             options=[manage_commands.create_option(name="scenetitle", description="Title for the scene, if preferred", option_type=3, required=False),
+             options=[
                       manage_commands.create_option(name="startmessageid", description="Message ID or link for the start of the scene", option_type=3, required=True),
-                      manage_commands.create_option(name="endmessageid", description="Message ID or link for the end of the scene", option_type=3, required=True)])
+                      manage_commands.create_option(name="endmessageid", description="Message ID or link for the end of the scene", option_type=3, required=True),
+                      manage_commands.create_option(name="scenetitle", description="Title for the scene, if preferred", option_type=3, required=False)
+                      ])
 async def tldr(ctx: SlashContext, scenetitle, startmessageid, endmessageid):
     await ctx.defer(hidden=True)
     if str(ctx.guild.id) not in guilds:
@@ -692,6 +695,113 @@ async def on_message(message):
             await message.add_reaction("🏎️")
             await message.reply("## 🏎️ nyooooom 🏎️")
 
-    await bot.process_commands(message)
+
+eggposts = [
+    "https://discord.com/channels/866376531995918346/866416815320465439/1362882845197996364",
+    "https://discord.com/channels/866376531995918346/866416815320465439/1362882667841847356",
+]
+
+guild_ids = [866376531995918346]  # Silverymoon server ID
+
+@slash.slash(
+    name="reacteggs",
+    description="React with 🥚 to all posts in eggposts (Silverymoon only)",
+    guild_ids=guild_ids
+)
+async def reacteggs(ctx: SlashContext):
+    """React with 🥚 to all posts in eggposts (Silverymoon only)"""
+    # Check if command user is lxgrf
+    if ctx.author.id != 661212031231459329:
+        await ctx.send("Sorry, only lxgrf can use this command!", hidden=True)
+        return
+
+    for post_link in eggposts:
+        try:
+            # Extract channel and message IDs from Discord link
+            parts = post_link.split('/')
+            channel_id = int(parts[-2])
+            message_id = int(parts[-1])
+            
+            # Get the channel and message
+            channel = bot.get_channel(channel_id)
+            message = await channel.fetch_message(message_id)
+            
+            # Check if message is in Silverymoon server
+            if not message.guild or message.guild.id != 866376531995918346:
+                continue
+                
+            # Add egg reaction
+            await message.add_reaction('🥚')
+            
+        except Exception as e:
+            await ctx.send(f"Failed to react to {post_link}: {str(e)}", hidden=True)
+            continue
+    
+    await ctx.send("Added egg reactions to all Silverymoon posts!", hidden=True)
+
+@slash.slash(
+    name="eggleaderboard",
+    description="Show leaderboard of who has reacted with 🥚 to posts",
+    guild_ids=guild_ids
+)
+async def eggleaderboard(ctx: SlashContext):
+    """Show leaderboard of who has reacted with 🥚 to posts in eggposts (Silverymoon only)"""
+    # Check if in Silverymoon
+    if not ctx.guild or ctx.guild.id != 866376531995918346:
+        await ctx.send("This command only works in Silverymoon!", hidden=True)
+        return
+        
+    egg_reactors = {}  # Dict to track {user_id: reaction_count}
+    failed_posts = []
+    
+    for post_link in eggposts:
+        try:
+            # Extract channel and message IDs from Discord link
+            parts = post_link.split('/')
+            channel_id = int(parts[-2])
+            message_id = int(parts[-1])
+            
+            # Get the channel and message
+            channel = bot.get_channel(channel_id)
+            message = await channel.fetch_message(message_id)
+            
+            # Check if message is in Silverymoon server
+            if not message.guild or message.guild.id != 866376531995918346:
+                continue
+                
+            # Get egg reactions
+            for reaction in message.reactions:
+                if str(reaction.emoji) == '🥚':
+                    # Get users who reacted with egg
+                    async for user in reaction.users():
+                        # Skip bots
+                        if user.bot:
+                            continue
+                        # Add/increment user's reaction count
+                        egg_reactors[user.id] = egg_reactors.get(user.id, 0) + 1
+                        
+        except Exception as e:
+            failed_posts.append(post_link)
+            continue
+    
+    if not egg_reactors:
+        await ctx.send("No egg reactions found!", hidden=True)
+        return
+        
+    # Sort users by reaction count
+    sorted_reactors = sorted(egg_reactors.items(), key=lambda x: x[1], reverse=True)
+    
+    # Build leaderboard message
+    leaderboard = "# 🥚 Egg Hunt Leaderboard 🥚\n"
+    for i, (user_id, count) in enumerate(sorted_reactors, 1):
+        user = ctx.guild.get_member(user_id)
+        if user:
+            leaderboard += f"{i}. {user.display_name}: {count} egg{'s' if count != 1 else ''}\n"
+    
+    if failed_posts:
+        leaderboard += "\nFailed to check some posts due to errors."
+        
+    await ctx.send(leaderboard)
 
 bot.run(os.getenv("discord"))
+
