@@ -8,6 +8,11 @@ from dotenv import load_dotenv
 import os
 import re
 import logging
+import random
+import json
+import pathlib
+import discord
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -696,48 +701,20 @@ async def on_message(message):
             await message.reply("## 🏎️ nyooooom 🏎️")
 
 
-eggposts = [
-    "https://discord.com/channels/866376531995918346/866416815320465439/1362882845197996364",
-    "https://discord.com/channels/866376531995918346/866416815320465439/1362882667841847356",
-]
+
 
 guild_ids = [866376531995918346]  # Silverymoon server ID
-
-@slash.slash(
-    name="reacteggs",
-    description="React with 🥚 to all posts in eggposts (Silverymoon only)",
-    guild_ids=guild_ids
-)
-async def reacteggs(ctx: SlashContext):
-    """React with 🥚 to all posts in eggposts (Silverymoon only)"""
-    # Check if command user is lxgrf
-    if ctx.author.id != 661212031231459329:
-        await ctx.send("Sorry, only lxgrf can use this command!", hidden=True)
-        return
-
-    for post_link in eggposts:
-        try:
-            # Extract channel and message IDs from Discord link
-            parts = post_link.split('/')
-            channel_id = int(parts[-2])
-            message_id = int(parts[-1])
-            
-            # Get the channel and message
-            channel = bot.get_channel(channel_id)
-            message = await channel.fetch_message(message_id)
-            
-            # Check if message is in Silverymoon server
-            if not message.guild or message.guild.id != 866376531995918346:
-                continue
-                
-            # Add egg reaction
-            await message.add_reaction('🥚')
-            
-        except Exception as e:
-            await ctx.send(f"Failed to react to {post_link}: {str(e)}", hidden=True)
-            continue
-    
-    await ctx.send("Added egg reactions to all Silverymoon posts!", hidden=True)
+egg_categories = [
+    "866482611521454100",
+    "866454476612960296",
+    "866459103419957268",
+    "866376531995918347",
+    "880898329037389886",
+    "880873950563954808",
+    "880884874750328903",
+    "880874051193671771",
+    "880890983309512804"
+]
 
 @slash.slash(
     name="eggleaderboard",
@@ -751,57 +728,365 @@ async def eggleaderboard(ctx: SlashContext):
         await ctx.send("This command only works in Silverymoon!", hidden=True)
         return
         
+    await ctx.defer(hidden=True)
+    await ctx.send("Starting to check egg reactions...", hidden=True)
+    
     egg_reactors = {}  # Dict to track {user_id: reaction_count}
     failed_posts = []
     
-    for post_link in eggposts:
-        try:
-            # Extract channel and message IDs from Discord link
-            parts = post_link.split('/')
-            channel_id = int(parts[-2])
-            message_id = int(parts[-1])
+    try:
+        # Load posts from file
+        with open(POSTS_FILE, "r") as f:
+            posts = json.load(f)
             
-            # Get the channel and message
-            channel = bot.get_channel(channel_id)
-            message = await channel.fetch_message(message_id)
-            
-            # Check if message is in Silverymoon server
-            if not message.guild or message.guild.id != 866376531995918346:
-                continue
+        total_posts = len(posts)
+        await ctx.send(f"Found {total_posts} posts to check...", hidden=True)
+        
+        for i, post in enumerate(posts, 1):
+            try:
+                # Extract channel and message IDs from Discord link
+                parts = post["message_link"].split('/')
+                channel_id = int(parts[-2])
+                message_id = int(parts[-1])
                 
-            # Get egg reactions
-            for reaction in message.reactions:
-                if str(reaction.emoji) == '🥚':
-                    # Get users who reacted with egg
-                    async for user in reaction.users():
-                        # Skip bots
-                        if user.bot:
-                            continue
-                        # Add/increment user's reaction count
-                        egg_reactors[user.id] = egg_reactors.get(user.id, 0) + 1
-                        
-        except Exception as e:
-            failed_posts.append(post_link)
-            continue
-    
-    if not egg_reactors:
-        await ctx.send("No egg reactions found!", hidden=True)
-        return
+                # Get the channel and message
+                channel = bot.get_channel(channel_id)
+                message = await channel.fetch_message(message_id)
+                
+                # Check if message is in Silverymoon server
+                if not message.guild or message.guild.id != 866376531995918346:
+                    continue
+                    
+                # Get egg reactions
+                for reaction in message.reactions:
+                    if str(reaction.emoji) == '🥚':
+                        # Get users who reacted with egg
+                        async for user in reaction.users():
+                            # Skip bots
+                            if user.bot:
+                                continue
+                            # Add/increment user's reaction count
+                            egg_reactors[user.id] = egg_reactors.get(user.id, 0) + 1
+                
+                # Add delay every 10 checks to avoid rate limiting
+                if i % 10 == 0:
+                    await asyncio.sleep(1)  # 1 second delay every 10 checks
+                
+                if i % 10 == 0:  # Update progress every 10 posts
+                    await ctx.send(f"Progress: {i}/{total_posts} posts checked...", hidden=True)
+                            
+            except Exception as e:
+                logger.error(f"Failed to check post {post['message_link']}: {str(e)}")
+                failed_posts.append(post['message_link'])
+                continue
         
-    # Sort users by reaction count
-    sorted_reactors = sorted(egg_reactors.items(), key=lambda x: x[1], reverse=True)
-    
-    # Build leaderboard message
-    leaderboard = "# 🥚 Egg Hunt Leaderboard 🥚\n"
-    for i, (user_id, count) in enumerate(sorted_reactors, 1):
-        user = ctx.guild.get_member(user_id)
-        if user:
-            leaderboard += f"{i}. {user.display_name}: {count} egg{'s' if count != 1 else ''}\n"
-    
-    if failed_posts:
-        leaderboard += "\nFailed to check some posts due to errors."
+        if not egg_reactors:
+            await ctx.send("No egg reactions found!", hidden=True)
+            return
+            
+        # Sort users by reaction count
+        sorted_reactors = sorted(egg_reactors.items(), key=lambda x: x[1], reverse=True)
         
-    await ctx.send(leaderboard)
+        # Build leaderboard message
+        leaderboard = "# 🥚 Egg Hunt Leaderboard 🥚\n"
+        for i, (user_id, count) in enumerate(sorted_reactors, 1):
+            user = ctx.guild.get_member(user_id)
+            if user:
+                leaderboard += f"{i}. {user.display_name}: {count} egg{'s' if count != 1 else ''}\n"
+        
+        if failed_posts:
+            leaderboard += f"\nFailed to check {len(failed_posts)} posts due to errors."
+            
+        await ctx.send(leaderboard)
+        
+    except Exception as e:
+        logger.error(f"Error in eggleaderboard command: {str(e)}")
+        await ctx.send(f"Error: {str(e)}", hidden=True)
+
+POSTS_FILE = "/data/random_posts.json"
+
+async def save_posts_to_file(posts):
+    """Save posts to a JSON file in the data directory"""
+    # Ensure the directory exists
+    pathlib.Path("/data").mkdir(exist_ok=True)
+    
+    with open(POSTS_FILE, "w") as f:
+        json.dump(posts, f, indent=2)
+
+async def load_posts_from_file():
+    """Load posts from the JSON file"""
+    try:
+        with open(POSTS_FILE, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+# @slash.slash(
+#     name="collectrandomposts",
+#     description="Collect 100 random posts from Silverymoon categories and save them",
+#     guild_ids=[866376531995918346]  # Silverymoon server ID
+# )
+# async def collectrandomposts(ctx: SlashContext):
+    # """Collect random posts from Silverymoon categories and save them"""
+    # # Check if command user is authorized
+    # if not any(role.name in authorised_roles for role in ctx.author.roles):
+    #     await ctx.send("Sorry, only authorized users can use this command!", hidden=True)
+    #     return
+
+    # await ctx.defer(hidden=True)
+    # await ctx.send("Starting post collection process...", hidden=True)
+    
+    # # Get specified categories in Silverymoon
+    # await ctx.send("Finding categories...", hidden=True)
+    # try:
+    #     all_channels = ctx.guild.channels
+    #     await ctx.send(f"Total channels in server: {len(all_channels)}", hidden=True)
+        
+    #     logger.info(f"Processing {len(all_channels)} channels")
+    #     await ctx.send("Starting channel processing...", hidden=True)
+        
+    #     # Process categories in chunks to show progress
+    #     categories = []
+    #     processed = 0
+    #     total_channels = len(all_channels)
+        
+    #     for channel in all_channels:
+    #         try:
+    #             processed += 1
+    #             logger.info(f"Processing channel {channel.name} ({channel.id})")
+                
+    #             if isinstance(channel, discord.CategoryChannel):
+    #                 logger.info(f"Found category: {channel.name} ({channel.id})")
+    #                 if str(channel.id) in egg_categories:
+    #                     logger.info(f"Category {channel.name} matches egg_categories")
+    #                     categories.append(channel)
+                
+    #             if processed % 20 == 0:  # Update more frequently
+    #                 await ctx.send(f"Processed {processed}/{total_channels} channels...", hidden=True)
+    #                 await asyncio.sleep(1)  # Add delay every 20 channels
+                    
+    #         except AttributeError as e:
+    #             logger.error(f"Error accessing channel attributes: {str(e)}")
+    #             continue
+    #         except Exception as e:
+    #             logger.error(f"Unexpected error processing channel: {str(e)}")
+    #             continue
+        
+    #     await ctx.send(f"Channel processing complete. Found {len(categories)} matching categories", hidden=True)
+    #     await asyncio.sleep(1)  # Add delay after processing
+        
+    # except Exception as e:
+    #     logger.error(f"Error in category collection: {str(e)}")
+    #     await ctx.send(f"Error during category collection: {str(e)}", hidden=True)
+    #     return
+    
+    # if not categories:
+    #     await ctx.send("No matching categories found!", hidden=True)
+    #     return
+    
+    # # Count total channels first
+    # total_channels = 0
+    # category_channels = {}
+    # await ctx.send("Counting channels in matching categories...", hidden=True)
+    # await asyncio.sleep(1)  # Add delay before channel counting
+    
+    # for category in categories:
+    #     text_channels = [c for c in category.channels if isinstance(c, discord.TextChannel)]
+    #     category_channels[category.id] = text_channels
+    #     total_channels += len(text_channels)
+    #     await ctx.send(f"Category {category.name}: {len(text_channels)} channels", hidden=True)
+    #     await asyncio.sleep(0.5)  # Add shorter delay between category updates
+    
+    # await asyncio.sleep(1)  # Add delay before final count message
+    # await ctx.send(f"Found {len(categories)} categories with {total_channels} total channels to search through...", hidden=True)
+    
+    # collected_posts = []
+    # channel_stats = {}  # Store channel message counts
+    # total_messages = 0
+    # channels_processed = 0
+    
+    # # First pass: Count messages in each channel
+    # for category in categories:
+    #     text_channels = category_channels[category.id]
+        
+    #     await ctx.send(f"Scanning category: {category.name} ({len(text_channels)} channels)...", hidden=True)
+        
+    #     for channel in text_channels:
+    #         try:
+    #             # Get messages that aren't from bots and aren't empty
+    #             messages = [
+    #                 message async for message in channel.history(limit=500)
+    #                 if not message.author.bot and message.content.strip()
+    #             ]
+                
+    #             if messages:
+    #                 channel_stats[channel.id] = {
+    #                     'count': len(messages),
+    #                     'messages': messages,
+    #                     'channel': channel,
+    #                     'category': category
+    #                 }
+    #                 total_messages += len(messages)
+                
+    #             channels_processed += 1
+    #             if channels_processed % 5 == 0:  # Update every 5 channels
+    #                 await ctx.send(f"Progress: {channels_processed}/{total_channels} channels scanned ({(channels_processed/total_channels*100):.1f}%)...", hidden=True)
+                    
+    #         except discord.Forbidden:
+    #             channels_processed += 1
+    #             continue
+    
+    # if not channel_stats:
+    #     await ctx.send("No valid messages found in any channel!", hidden=True)
+    #     return
+        
+    # await ctx.send(f"Found {total_messages} valid messages across {len(channel_stats)} channels. Calculating distribution...", hidden=True)
+        
+    # # Calculate target posts per channel based on activity
+    # target_total = 200
+    # min_posts_per_channel = 1  # Ensure at least some representation from each channel
+    # remaining_posts = target_total
+    
+    # # First, allocate minimum posts to each channel
+    # for channel_id in channel_stats:
+    #     channel_stats[channel_id]['target'] = min_posts_per_channel
+    #     remaining_posts -= min_posts_per_channel
+    
+    # # Distribute remaining posts proportionally based on activity
+    # for channel_id, stats in channel_stats.items():
+    #     if remaining_posts <= 0:
+    #         break
+            
+    #     # Calculate fair share based on channel activity
+    #     activity_share = (stats['count'] / total_messages) * remaining_posts
+    #     # Round to nearest integer, but don't exceed available messages
+    #     additional_posts = min(
+    #         round(activity_share),
+    #         stats['count'] - min_posts_per_channel
+    #     )
+    #     channel_stats[channel_id]['target'] += additional_posts
+    #     remaining_posts -= additional_posts
+    
+    # await ctx.send("Selecting random posts from each channel...", hidden=True)
+    
+    # # Collect posts based on calculated targets
+    # channels_with_posts = 0
+    # for stats in channel_stats.values():
+    #     try:
+    #         # Get random messages from this channel
+    #         target = stats['target']
+    #         if target <= 0:
+    #             continue
+                
+    #         random_messages = random.sample(
+    #             stats['messages'], 
+    #             min(target, len(stats['messages']))
+    #         )
+            
+    #         for message in random_messages:
+    #             collected_posts.append({
+    #                 "content": message.content,
+    #                 "channel_name": stats['channel'].name,
+    #                 "category_name": stats['category'].name,
+    #                 "message_link": message.jump_url,
+    #                 "author_name": message.author.name,
+    #                 "timestamp": message.created_at.isoformat()
+    #             })
+            
+    #         channels_with_posts += 1
+    #         if channels_with_posts % 5 == 0:  # Update every 5 channels
+    #             await ctx.send(f"Selected posts from {channels_with_posts}/{len(channel_stats)} channels...", hidden=True)
+                
+    #     except Exception as e:
+    #         logger.error(f"Error collecting from channel {stats['channel'].name}: {str(e)}")
+    #         continue
+    
+    # await ctx.send("Finalizing collection...", hidden=True)
+    
+    # # Final shuffle and trim if needed
+    # random.shuffle(collected_posts)
+    # if len(collected_posts) > 200:
+    #     collected_posts = collected_posts[:200]
+    
+    # # Save to file
+    # await save_posts_to_file(collected_posts)
+    
+    # # Prepare statistics for the response
+    # channel_distribution = {}
+    # for post in collected_posts:
+    #     channel_distribution[post['channel_name']] = channel_distribution.get(post['channel_name'], 0) + 1
+    
+    # distribution_text = "\nDistribution:\n" + "\n".join(
+    #     f"- {channel}: {count} posts"
+    #     for channel, count in sorted(channel_distribution.items(), key=lambda x: x[1], reverse=True)
+    # )
+    
+    # await ctx.send(
+    #     f"✅ Collection complete! Collected {len(collected_posts)} random posts from {len(categories)} categories!{distribution_text}", 
+    #     hidden=True
+    # )
+
+# @slash.slash(
+#     name="reacteggs",
+#     description="React with 🥚 to all posts in eggposts (Silverymoon only)",
+#     guild_ids=guild_ids
+# )
+# async def reacteggs(ctx: SlashContext):
+#     """React with 🥚 to all posts in eggposts (Silverymoon only)"""
+#     # Check if command user is lxgrf
+#     if ctx.author.id != 661212031231459329:
+#         await ctx.send("Sorry, only lxgrf can use this command!", hidden=True)
+#         return
+
+#     await ctx.defer(hidden=True)
+    
+#     try:
+#         # Load posts from file using POSTS_FILE constant
+#         with open(POSTS_FILE, "r") as f:
+#             posts = json.load(f)
+            
+#         total_posts = len(posts)
+#         await ctx.send(f"Found {total_posts} posts to process. This will take approximately {total_posts//300} minutes. Starting to add egg reactions...", hidden=True)
+        
+#         successful = 0
+#         failed = 0
+        
+#         for i, post in enumerate(posts, 1):
+#             try:
+#                 # Extract channel and message IDs from Discord link
+#                 parts = post["message_link"].split('/')
+#                 channel_id = int(parts[-2])
+#                 message_id = int(parts[-1])
+                
+#                 # Get the channel and message
+#                 channel = bot.get_channel(channel_id)
+#                 message = await channel.fetch_message(message_id)
+                
+#                 # Add egg reaction
+#                 await message.add_reaction('🥚')
+#                 successful += 1
+                
+#                 # Add delay to avoid rate limiting
+#                 await asyncio.sleep(0.2)  # 0.2 second delay between reactions
+                
+#                 if i % 10 == 0:  # Update progress every 10 posts
+#                     await ctx.send(f"Progress: {i}/{total_posts} posts processed...", hidden=True)
+                    
+#             except Exception as e:
+#                 logger.error(f"Failed to react to post {post['message_link']}: {str(e)}")
+#                 failed += 1
+#                 continue
+        
+#         await ctx.send(
+#             f"✅ Completed adding egg reactions!\n"
+#             f"Successfully reacted to {successful} posts\n"
+#             f"Failed to react to {failed} posts",
+#             hidden=True
+#         )
+        
+#     except Exception as e:
+#         logger.error(f"Error in egghunt_start command: {str(e)}")
+#         await ctx.send(f"Error: {str(e)}", hidden=True)
 
 bot.run(os.getenv("discord"))
 
