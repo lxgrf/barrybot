@@ -13,6 +13,7 @@ import json
 import pathlib
 import discord
 import asyncio
+import warnings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,6 +26,8 @@ anthro = anthropic.Anthropic(
 
 bot = Client(intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True, sync_on_cog_reload=True)
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 guilds ={
     "1010366904612954203":"a fantasy city", # Test Server
@@ -326,6 +329,51 @@ async def useractivity(ctx: SlashContext):
     embed = Embed(title="User Activity in RP Channels", description=description)
     await ctx.send(embed=embed)
 
+    # Check for level-ups in Silverymoon server
+    if ctx.guild.id == 866376531995918346:  # Silverymoon server
+        logger.info("Checking for level-ups in Silverymoon server")
+        level_up_channel_id = 866544281408897024
+        one_week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=31)
+        
+        try:
+            level_up_channel = bot.get_channel(level_up_channel_id)
+            logger.info(f"Level-up channel found: {level_up_channel}")
+            if level_up_channel:
+                level_ups = []
+                async for message in level_up_channel.history(limit=100, after=one_week_ago):
+                    if message.embeds:
+                        for embed in message.embeds:
+                            if embed.description:
+                                # This pattern now captures multi-word names and handles markdown in the level string.
+                                level_up_pattern = r'(.+?)\s+levels?\s+up\s+to\s+(.+?)\s+level!?'
+                                matches = re.findall(level_up_pattern, embed.description, re.IGNORECASE)
+                                
+                                for match in matches:
+                                    character_name = match[0].strip()
+                                    level_string = match[1]  # This will capture strings like '6th' or '**6th**'
+
+                                    # Extract only the digits from the captured level string
+                                    level_match = re.search(r'\d+', level_string)
+                                    if level_match:
+                                        level = level_match.group(0)
+                                        level_ups.append(f"- {character_name} reached level {level}!")
+                
+                logger.info(f"Level-ups found: {level_ups}")
+                
+                if level_ups:
+                    # Remove duplicates by converting to a set, then back to a list
+                    unique_level_ups = list(set(level_ups))
+                    level_up_description = "Level-ups in the last month:\n" + "\n".join(unique_level_ups)
+                    level_up_embed = Embed(title="Recent Level-ups", description=level_up_description)
+                    await ctx.send(embed=level_up_embed)
+                else:
+                    level_up_embed = Embed(title="Recent Level-ups", description="No level-ups found in the last week.")
+                    await ctx.send(embed=level_up_embed)
+                    
+        except Exception as e:
+            logger.error(f"Error checking level-ups: {str(e)}")
+            # Continue with the rest of the function even if level-up check fails
+
     # Now let's dig deeper into the inactive users and when they did last post
     description = ""
     # get all messages from the last 180 days
@@ -432,8 +480,8 @@ async def channelactivity(ctx: SlashContext):
     if len(stale) > 0:
         description = "Copy and past the below for your weekly pinging needs\n\n"
         description += "```\n## Weekly pings!\nAs usual, this is a friendly check in on those scenes which seem to be slowing down. How's it going? How's life? Are you both communicating and happy with the pace of things? Do you need any help or hand from anyone?\n"
-        # stalepoint = datetime.datetime.utcnow() - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"])
-        # further_back = datetime.datetime.utcnow() - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"]*6)
+        # stalepoint = datetime.datetime.now(UTC) - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"])
+        # further_back = datetime.datetime.now(UTC) - datetime.timedelta(days=channeltimes[ctx.guild.id]["red"]*6)
         
 
         for channel_id in stale:
