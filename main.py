@@ -333,30 +333,46 @@ async def useractivity(ctx: SlashContext):
     if ctx.guild.id == 866376531995918346:  # Silverymoon server
         logger.info("Checking for level-ups in Silverymoon server")
         level_up_channel_id = 866544281408897024
-        one_week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=31)
+        one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=31)
         
         try:
             level_up_channel = bot.get_channel(level_up_channel_id)
             logger.info(f"Level-up channel found: {level_up_channel}")
             if level_up_channel:
                 level_ups = []
-                async for message in level_up_channel.history(limit=100, after=one_week_ago):
+                logger.info(f"Searching for messages after: {one_month_ago}")
+                
+                # First, let's count total messages to see if we need to increase the limit
+                message_count = 0
+                async for message in level_up_channel.history(limit=500, after=one_month_ago):
+                    message_count += 1
+                    # Log every message to see what we're getting
+                    logger.info(f"Message {message_count}: {message.created_at} - Author: {message.author} - Has embeds: {bool(message.embeds)}")
+                    if message.embeds:
+                        for i, embed in enumerate(message.embeds):
+                            logger.info(f"  Embed {i} description: {embed.description}")
+                            # Check if any embed mentions Sarran
+                            if embed.description and 'sarran' in embed.description.lower():
+                                logger.info(f"  *** FOUND SARRAN MESSAGE: {embed.description}")
+                
+                logger.info(f"Total messages found in date range: {message_count}")
+                
+                # Now do the actual processing
+                async for message in level_up_channel.history(limit=500, after=one_month_ago):
                     if message.embeds:
                         for embed in message.embeds:
                             if embed.description:
-                                # This pattern now captures multi-word names and handles markdown in the level string.
-                                level_up_pattern = r'(.+?)\s+levels?\s+up\s+to\s+(.+?)\s+level!?'
+                                logger.info(f"Processing embed description: {embed.description}")
+                                # Updated pattern: use greedy quantifier for name, more specific level pattern
+                                level_up_pattern = r'(.+)\s+levels?\s+up\s+to\s+\*{0,2}(\d+)(?:st|nd|rd|th)\*{0,2}\s+level!?'
                                 matches = re.findall(level_up_pattern, embed.description, re.IGNORECASE)
+                                logger.info(f"Regex matches found: {matches}")
                                 
                                 for match in matches:
                                     character_name = match[0].strip()
-                                    level_string = match[1]  # This will capture strings like '6th' or '**6th**'
-
-                                    # Extract only the digits from the captured level string
-                                    level_match = re.search(r'\d+', level_string)
-                                    if level_match:
-                                        level = level_match.group(0)
-                                        level_ups.append(f"- {character_name} reached level {level}!")
+                                    level = match[1]  # Direct capture of the digit(s)
+                                    level_ups.append(f"- {character_name} reached level {level}!")
+                                    logger.info(f"Added level-up: {character_name} reached level {level}")
                 
                 logger.info(f"Level-ups found: {level_ups}")
                 
