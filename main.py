@@ -113,6 +113,8 @@ channeltimes = {
     1114617197931790376: {"yellow":14,"red":31}, # Test Server
 }
 
+nyoom_immunity = [929193107487092798,929193266052759582,940415123527446608,929193302287343727]
+
 def _server_error(ctx):
     title = "Error - Server not recognised."
     description = f"Your Server ID is {ctx.guild.id}. This server is not on the authorised list for this bot.\n\nPlease contact `@lxgrf` if you believe this is in error."
@@ -759,10 +761,11 @@ async def on_message(message):
         
     # Check if message is in Silverymoon guild
     if message.guild and message.guild.id == 866376531995918346:
-        # Check for "nyoom" with 2+ o's
-        if re.search(r'ny{1,}o{2,}m', message.content.lower()):
-            await message.add_reaction("🏎️")
-            await message.reply("## 🏎️ nyooooom 🏎️")
+        if message.channel.id not in nyoom_immunity:
+            # Check for "nyoom" with 2+ o's
+            if re.search(r'ny{1,}o{2,}m', message.content.lower()):
+                await message.add_reaction("🏎️")
+                await message.reply("## 🏎️ nyooooom 🏎️")
 
 
 
