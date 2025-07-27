@@ -97,32 +97,33 @@ class Activity(commands.Cog):
 
         if ctx.guild.id == 866376531995918346:  # Silverymoon server
             logger.info("Checking for level-ups in Silverymoon server")
-            level_up_channel_id = 866544281408897024
-            one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=31)
+            level_up_channel_ids = [866544281408897024, 866544082331369472, 881218238170665043]
+            two_weeks_ago = datetime.datetime.utcnow() - datetime.timedelta(days=14)
             
             try:
-                level_up_channel = self.bot.get_channel(level_up_channel_id)
-                if level_up_channel:
-                    level_ups = []
-                    async for message in level_up_channel.history(limit=500, after=one_month_ago):
-                        if message.embeds:
-                            for embed in message.embeds:
-                                if embed.description:
-                                    level_up_pattern = r'(.+)\s+levels?\s+up\s+to\s+\*{0,2}(\d+)(?:st|nd|rd|th)\*{0,2}\s+level!?'
-                                    matches = re.findall(level_up_pattern, embed.description, re.IGNORECASE)
-                                    for match in matches:
-                                        character_name = match[0].strip()
-                                        level = match[1]
-                                        level_ups.append(f"- {character_name} reached level {level}!")
-                    
-                    if level_ups:
-                        unique_level_ups = list(set(level_ups))
-                        level_up_description = "Level-ups in the last month:\n" + "\n".join(unique_level_ups)
-                        level_up_embed = Embed(title="Recent Level-ups", description=level_up_description)
-                        await ctx.send(embed=level_up_embed)
-                    else:
-                        level_up_embed = Embed(title="Recent Level-ups", description="No level-ups found in the last month.")
-                        await ctx.send(embed=level_up_embed)
+                level_ups = []
+                for channel_id in level_up_channel_ids:
+                    level_up_channel = self.bot.get_channel(channel_id)
+                    if level_up_channel:
+                        async for message in level_up_channel.history(limit=500, after=two_weeks_ago):
+                            if message.embeds:
+                                for embed in message.embeds:
+                                    if embed.description:
+                                        level_up_pattern = r'(.+)\s+levels?\s+up\s+to\s+\*{0,2}(\d+)(?:st|nd|rd|th)\*{0,2}\s+level!?'
+                                        matches = re.findall(level_up_pattern, embed.description, re.IGNORECASE)
+                                        for match in matches:
+                                            character_name = match[0].strip()
+                                            level = int(match[1])
+                                            level_ups.append((character_name, level))
+                
+                if level_ups:
+                    unique_level_ups = sorted(list(set(level_ups)), key=lambda item: item[1], reverse=True)
+                    level_up_description = "Level-ups in the last two weeks:\n" + "\n".join([f"- {name} reached level {level}!" for name, level in unique_level_ups])
+                    level_up_embed = Embed(title="Recent Level-ups", description=level_up_description)
+                    await ctx.send(embed=level_up_embed)
+                else:
+                    level_up_embed = Embed(title="Recent Level-ups", description="No level-ups found in the last two weeks.")
+                    await ctx.send(embed=level_up_embed)
             except Exception as e:
                 logger.error(f"Error checking level-ups: {str(e)}")
 
@@ -134,7 +135,7 @@ class Activity(commands.Cog):
             messages = channel.history(limit=500, after=six_months_ago, before=one_month_ago)
             async for message in messages:
                 if message.author.id in inactive.keys():
-                    timeElapsed = datetime.datetime.utcnow() - message.created_at
+                    timeElapsed = datetime.datetime.now(datetime.timezone.utc) - message.created_at
                     if timeElapsed.days < inactive[message.author.id]:
                         inactive[message.author.id] = int(timeElapsed.days)
 
@@ -184,7 +185,7 @@ class Activity(commands.Cog):
             messages = channel.history(limit=1)
             message = await messages.next()
             messageTime = message.created_at
-            timeElapsed = datetime.datetime.utcnow() - messageTime
+            timeElapsed = datetime.datetime.now(datetime.timezone.utc) - messageTime
             author = message.author
             status = ":green_circle:"
             if timeElapsed > datetime.timedelta(days=config.channeltimes[ctx.guild.id]["yellow"]):
