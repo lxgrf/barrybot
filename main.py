@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-bot = commands.Bot(command_prefix="!", intents=Intents.all())
+bot = commands.Bot(command_prefix="\u200b", intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True, sync_on_cog_reload=True)
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)

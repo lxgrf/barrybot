@@ -135,7 +135,7 @@ class Activity(commands.Cog):
             messages = channel.history(limit=500, after=six_months_ago, before=one_month_ago)
             async for message in messages:
                 if message.author.id in inactive.keys():
-                    timeElapsed = datetime.datetime.now(datetime.timezone.utc) - message.created_at
+                    timeElapsed = datetime.datetime.utcnow() - message.created_at
                     if timeElapsed.days < inactive[message.author.id]:
                         inactive[message.author.id] = int(timeElapsed.days)
 
@@ -185,7 +185,7 @@ class Activity(commands.Cog):
             messages = channel.history(limit=1)
             message = await messages.next()
             messageTime = message.created_at
-            timeElapsed = datetime.datetime.now(datetime.timezone.utc) - messageTime
+            timeElapsed = datetime.datetime.utcnow() - messageTime
             author = message.author
             status = ":green_circle:"
             if timeElapsed > datetime.timedelta(days=config.channeltimes[ctx.guild.id]["yellow"]):
