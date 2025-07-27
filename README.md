@@ -1,4 +1,4 @@
-# AI Suggester
+# Barry the Bot
 
 A Discord bot designed to enhance and manage roleplaying servers, with a focus on AI-powered tools and activity tracking.
 
