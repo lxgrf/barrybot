@@ -10,18 +10,34 @@ A Discord bot designed to enhance and manage roleplaying servers, with a focus o
     -   Identify inactive users and channels.
     -   Generate helpful pings for stale roleplay scenes.
 -   **Scene Export**: Export roleplay scenes to a text file for easy reading and archiving.
--   **Highly Configurable**: The bot's behavior can be extensively customized for different servers through the `config.py` file.
+-   **Highly Configurable**: The bot's behaviour can be extensively customised for different servers through the `config.py` file.
+
+## Project Structure
+
+The bot is organised using a cog-based architecture, where different functionalities are grouped into separate modules. This makes the codebase easier to manage and extend. The main components are:
+
+-   **`main.py`**: The entry point of the bot. It loads the configuration, initialises the bot, and loads all the cogs.
+-   **`config.py`**: A centralised file for all server-specific configurations, such as monitored channels, user roles, and activity thresholds.
+-   **`cogs/`**: This directory contains the different cogs, each responsible for a specific set of commands and features:
+    -   `summaries.py`: Handles scene summarisation (`/tldr`) and exporting (`/export`).
+    -   `prompts.py`: Manages AI-powered scene and solo prompts.
+    -   `activity.py`: Tracks user and channel activity.
+    -   `listeners.py`: Contains event listeners, such as `on_ready`.
 
 ## Commands
 
-### AI & Creative
--   `/tldr <start_message_id> <end_message_id> [scene_title]`: Summarizes a roleplay scene.
+Commands are grouped by their respective cogs.
+
+### Summaries (`summaries.py`)
+-   `/tldr <start_message_id> <end_message_id> [scene_title]`: Summarises a roleplay scene.
+-   `/export [start_message_id] [end_message_id]`: Exports a scene to a `.txt` file.
+
+### Prompts (`prompts.py`)
 -   `/scene <character_one_details> <character_two_details> [request]`: Generates a scene prompt for two characters.
 -   `/solo <character_details> [request]`: Generates a scene prompt for a single character.
--   `/export [start_message_id] [end_message_id]`: Exports a scene to a `.txt` file.
 -   `/help`: Displays help information for the AI prompt commands.
 
-### Moderation & Activity
+### Activity (`activity.py`)
 -   `/useractivity`: Displays a report of user posting activity in monitored roleplay channels (authorised users only).
 -   `/channelactivity`: Shows the last post time for all monitored channels and generates a ping message for stale channels (authorised users only).
 
@@ -29,21 +45,21 @@ A Discord bot designed to enhance and manage roleplaying servers, with a focus o
 
 -   [discord.py](https://github.com/Rapptz/discord.py)
 -   [discord-py-slash-command](https://github.com/eunwoo1104/discord-py-slash-command)
--   [Anthropic API](https://www.anthropic.com/): Powers the AI summarization and prompt generation features.
+-   [Anthropic API](https://www.anthropic.com/): Powers the AI summarisation and prompt generation features.
 
 ## Setup and Installation
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/ai-suggester.git
-    cd ai-suggester
+    git clone https://github.com/lxgrf/barrybot.git
+    cd barrybot
     ```
 
 2.  **Install dependencies:**
+    The intended operation for this bot is via a Docker container, but if you want to run it locally, you can install the dependencies using `uv`:
     ```
     uv sync
     ```
-    Though note that the intended operation is through a docker container.
 
 3.  **Create a `.env` file:**
     Create a file named `.env` in the root directory and add your bot's tokens:
@@ -54,7 +70,7 @@ A Discord bot designed to enhance and manage roleplaying servers, with a focus o
 
 4.  **Run the bot:**
     ```bash
-    python main.py
+    uv run main.py
     ```
 
 ## Configuration
@@ -62,11 +78,11 @@ A Discord bot designed to enhance and manage roleplaying servers, with a focus o
 The bot is configured via the `config.py` file. Here you can define:
 -   Guild (server) specific settings.
 -   Monitored channels for activity and summaries.
--   Roles for authorization and user filtering.
+-   Roles for authorisation and user filtering.
 -   Activity thresholds and more.
 
 Refer to the comments in `config.py` for detailed explanations of each setting.
 
 ## Contributing
 
-For bugs, feature requests, or other contributions, please contact the repository owner.
+For bugs, feature requests, or other contributions, please open an issue or contact the repository owner.
