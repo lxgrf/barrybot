@@ -1,3 +1,10 @@
-.git
-.gitignore
 .env
+*.env
+.git
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+deploy/
+.github/
+README.md
