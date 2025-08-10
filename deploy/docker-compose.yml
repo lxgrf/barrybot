@@ -1,6 +1,6 @@
 services:
   ai-suggester:
-    image: ghcr.io/lxgrf/ai-suggester:latest
+    image: ghcr.io/lxgrf/barrybot:latest
     container_name: ai-suggester
     env_file:
       - .env
@@ -9,14 +9,6 @@ services:
     restart: unless-stopped
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --label-enable --cleanup --interval 300
 
 volumes:
   ai_suggester_data:
