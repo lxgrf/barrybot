@@ -16,7 +16,7 @@ COPY requirements.txt .
 
 # Fast, cached dependency install via BuildKit cache mount
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system -r requirements.txt --frozen
+    uv pip install --system -r requirements.txt
 
 # Now copy the rest of the source
 COPY . .
