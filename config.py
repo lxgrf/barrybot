@@ -2,6 +2,7 @@ guilds ={
     "1010366904612954203":"a fantasy city", # Test Server
     "866376531995918346":"the city of Silverymoon, in Faerûn",
     "1001193835835183174":"the city of Caddocia, in a homebrew fantasy world",
+    "1197643287423627264":"The city of Bellegorn, in a homebrew fantasy world",
          }
 
 # User filtering
@@ -10,7 +11,7 @@ exclude_role = "Inactive"
 inactivity_threshold = 31 # days
 warning_threshold = 14 # days
 
-authorised_roles = ["Helper","Dragonspeaker","Mods","Admin","Owner"]
+authorised_roles = ["Helper","Dragonspeaker","Mods","Admin","Owner","Staff"]
 
 opt_in_roles = {
     866376531995918346 : "AI Scene Summary Permission", # Silverymoon
@@ -54,6 +55,12 @@ monitored_channels = {
                         1050399592287584276,1050399755336962078,1050399912698843186,1044715490544734278,1044717853754019890,
                         1044715531430797372,
                         ],
+    1197643287423627264 : [ # Bellegorn
+                        1207354508943032362,1198123661136236635,1198122147265138809,1198122712669896745,1198123414121099364,
+                        1198123791470047292,1198122216840245389,1198127893226717234,1198122452757250079,1198124016360239164,
+                        1198124093392818236,1198124165429989446,1198124221449113650,1198124640665620531,1198124732336316426,
+                        1198126504740126760,1198124819665915935,
+                          ],
             }
     
 tldr_excluded_channels = {
@@ -80,11 +87,19 @@ channeltimes = {
     866376531995918346 : {"yellow":7,"red":14}, # Silverymoon
     1001193835835183174: {"yellow":14,"red":31}, # Caddocia
     1114617197931790376: {"yellow":14,"red":31}, # Test Server
+    1197643287423627264: {"yellow":14,"red":31}, # Bellegorn
 }
 
 nyoom_immunity = [929193107487092798,929193266052759582,940415123527446608,929193302287343727]
 
 guild_ids = [866376531995918346]  # Silverymoon server ID
+
+# AI capability enabling
+ai_enabled_servers = [
+    "866376531995918346",  # Silverymoon
+    "1001193835835183174", # Caddocia
+    # Add your new server ID here
+]
 
 egg_categories = [
     "866482611521454100",

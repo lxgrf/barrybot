@@ -2,7 +2,7 @@ from discord import Embed
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext, manage_commands
 import config
-from utils import _server_error, claude_call
+from utils import _server_error, claude_call, _ai_enabled_server
 
 class Prompts(commands.Cog):
     def __init__(self, bot):
@@ -18,6 +18,11 @@ class Prompts(commands.Cog):
         if str(ctx.guild.id) not in config.guilds:
             embed = _server_error(ctx)
             await ctx.send(embed=embed)
+            return
+        elif not _ai_enabled_server(ctx.guild.id):
+            embed = Embed(title="AI Not Enabled", description="This server does not have AI capabilities enabled. Please contact an administrator if you believe this is in error.")
+            await ctx.send(embed=embed)
+            return
         elif len(first_character.split(" ")) < 5 or len(second_character.split(" ")) < 5:
             description += "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about these characters, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`. I have done my best, but the scene I have generated may not fit your expectations.\n\n"
         
@@ -44,6 +49,11 @@ class Prompts(commands.Cog):
         if str(ctx.guild.id) not in config.guilds:
             embed = _server_error(ctx)
             await ctx.send(embed=embed)
+            return
+        elif not _ai_enabled_server(ctx.guild.id):
+            embed = Embed(title="AI Not Enabled", description="This server does not have AI capabilities enabled. Please contact an administrator if you believe this is in error.")
+            await ctx.send(embed=embed)
+            return
         elif len(character.split(" ")) < 5:
             description += "Ok, I'll be honest, I haven't read your scenes.\n\nCan you tell me a little more about this character, to help me provide a detailed scene for you? For example, `Bob, a grumpy retired carpenter who misses his daughter` is much easier for me to work with than just `Bob`.\n\n"
             
@@ -73,6 +83,13 @@ class Prompts(commands.Cog):
         description += "\n\n**Bad Usage**:\n `/scene first_character:Dave, second_character:Geraldine`\n It might be clear to you who Dave and Geraldine are, but the bot doesn't know. It will do its best, but will generate a prompt that may not fit your expectations."
         description += "\n\n**Good Usage**:\n `/scene first_character:Dave, a retired carpenter who wants to reconcile with his estranged daughter but is too proud to admit fault, character 2:Geraldine, Dave's daughter, who is a successful merchant and has no time for her father's nonsense`\n This description is much more detailed, and the bot will be able to generate a prompt that fits your expectations."
         description += f"\n\nThe bot is currently in beta, using Anthropic's Claudea, so please report any bugs or suggestions to @lxgrf. \n\n`Guild ID: {ctx.guild.id}`"
+        
+        # Add AI capability status to help command
+        if _ai_enabled_server(ctx.guild.id):
+            description += "\n\n✅ **AI Capabilities: Enabled**"
+        else:
+            description += "\n\n❌ **AI Capabilities: Disabled** - Contact an administrator to enable AI features."
+        
         embed = Embed(title=title, description=description)
         await ctx.send(embed=embed)
 

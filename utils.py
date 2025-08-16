@@ -1,6 +1,7 @@
 from discord import Embed
 import anthropic
 import os
+import config
 
 anthro = anthropic.Anthropic(
     api_key = os.getenv("anthropic")
@@ -17,6 +18,10 @@ def _authorised_user():
     description = "Some functions are restricted to authorised users only. Please contact `@lxgrf` if you feel you should have access."
     embed = Embed(title=title, description=description)
     return embed
+
+def _ai_enabled_server(guild_id):
+    """Check if a server has AI capabilities enabled."""
+    return str(guild_id) in config.ai_enabled_servers
 
 def claude_call(prompt, max_tokens=200, temperature=0.8):
     message = anthro.messages.create(
