@@ -2,6 +2,7 @@ import datetime
 import logging
 import re
 from discord import Embed
+from discord.errors import NoMoreItems
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext
 import config
@@ -39,6 +40,9 @@ class Activity(commands.Cog):
         channel_histories_old = {}
         for channel_id in config.monitored_channels[ctx.guild.id]:
             channel = self.bot.get_channel(int(channel_id))
+            if not channel:
+                # Channel not found or inaccessible; skip safely
+                continue
             old_messages = channel.history(limit=50, after=one_month_ago, before=fourteen_days_ago)
             new_messages = channel.history(limit=50, after=fourteen_days_ago)
             channel_histories_new[channel_id] = new_messages
@@ -132,6 +136,9 @@ class Activity(commands.Cog):
 
         for channel_id in config.monitored_channels[ctx.guild.id]:
             channel = self.bot.get_channel(int(channel_id))
+            if not channel:
+                # Channel not found or inaccessible; skip safely
+                continue
             messages = channel.history(limit=500, after=six_months_ago, before=one_month_ago)
             async for message in messages:
                 if message.author.id in inactive.keys():
@@ -183,7 +190,11 @@ class Activity(commands.Cog):
         for channel_id in channel_list:
             channel = self.bot.get_channel(int(channel_id))
             messages = channel.history(limit=1)
-            message = await messages.next()
+            try:
+                message = await messages.next()
+            except NoMoreItems:
+                # Channel has no messages; skip reporting
+                continue
             messageTime = message.created_at
             timeElapsed = datetime.datetime.utcnow() - messageTime
             author = message.author
