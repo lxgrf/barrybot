@@ -5,6 +5,11 @@ on:
     branches: [ main ]
     tags:
       - 'v*'
+      - 'rebuild-*'
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -17,7 +22,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Determine target platforms
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "PLATFORMS=linux/amd64,linux/arm64" >> $GITHUB_ENV
+          else
+            echo "PLATFORMS=linux/arm64" >> $GITHUB_ENV
+          fi
+
       - name: Set up QEMU
+        if: env.PLATFORMS != 'linux/amd64'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
@@ -44,9 +58,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ env.PLATFORMS }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=barrybot
+          cache-to: type=gha,mode=max,scope=barrybot
+          provenance: false

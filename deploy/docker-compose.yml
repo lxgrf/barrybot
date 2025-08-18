@@ -1,14 +1,14 @@
 services:
-  ai-suggester:
+  barry:
     image: ghcr.io/lxgrf/barrybot:latest
-    container_name: ai-suggester
+    container_name: barry
     env_file:
       - .env
     volumes:
-      - ai_suggester_data:/data
+      - barry_data:/data
     restart: unless-stopped
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
 volumes:
-  ai_suggester_data:
+  barry_data:
