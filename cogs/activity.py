@@ -30,7 +30,7 @@ class Activity(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        active = [user.id for user in ctx.guild.members if config.include_role in [role.name for role in user.roles] and config.exclude_role not in [role.name for role in user.roles]]
+        active = [user.id for user in ctx.guild.members if any(role.name in config.include_role for role in user.roles) and not any(role.name in config.exclude_role for role in user.roles)]
 
         one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=config.inactivity_threshold)
         fourteen_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=config.warning_threshold)

@@ -6,8 +6,8 @@ guilds ={
          }
 
 # User filtering
-include_role = "Member"
-exclude_role = "Inactive"
+include_role = ["Member","Player"]
+exclude_role = ["Inactive", "Break Player"]
 inactivity_threshold = 31 # days
 warning_threshold = 14 # days
 
