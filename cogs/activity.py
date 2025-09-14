@@ -109,7 +109,9 @@ class Activity(commands.Cog):
                 for channel_id in level_up_channel_ids:
                     level_up_channel = self.bot.get_channel(channel_id)
                     if level_up_channel:
-                        async for message in level_up_channel.history(limit=500, after=two_weeks_ago):
+                        # Use higher limit for high-throughput channel, lower for others
+                        message_limit = 2000 if channel_id == 881218238170665043 else 200
+                        async for message in level_up_channel.history(limit=message_limit, after=two_weeks_ago):
                             texts = []
                             if message.content:
                                 texts.append(message.content)
