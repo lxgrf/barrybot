@@ -101,7 +101,7 @@ class Activity(commands.Cog):
 
         if ctx.guild.id == 866376531995918346:  # Silverymoon server
             logger.info("Checking for level-ups in Silverymoon server")
-            level_up_channel_ids = [866544281408897024, 866544082331369472, 881218238170665043]
+            level_up_channel_ids = [866544281408897024, 866544082331369472, 881218238170665043] 
             two_weeks_ago = datetime.datetime.utcnow() - datetime.timedelta(days=14)
             
             try:
@@ -110,15 +110,38 @@ class Activity(commands.Cog):
                     level_up_channel = self.bot.get_channel(channel_id)
                     if level_up_channel:
                         async for message in level_up_channel.history(limit=500, after=two_weeks_ago):
+                            texts = []
+                            if message.content:
+                                texts.append(message.content)
                             if message.embeds:
-                                for embed in message.embeds:
-                                    if embed.description:
-                                        level_up_pattern = r'(.+)\s+levels?\s+up\s+to\s+\*{0,2}(\d+)(?:st|nd|rd|th)\*{0,2}\s+level!?'
-                                        matches = re.findall(level_up_pattern, embed.description, re.IGNORECASE)
-                                        for match in matches:
-                                            character_name = match[0].strip()
-                                            level = int(match[1])
-                                            level_ups.append((character_name, level))
+                                for e in message.embeds:
+                                    if getattr(e, "title", None):
+                                        texts.append(e.title)
+                                    if getattr(e, "description", None):
+                                        texts.append(e.description)
+                                    for f in getattr(e, "fields", []):
+                                        if getattr(f, "name", None):
+                                            texts.append(str(f.name))
+                                        if getattr(f, "value", None):
+                                            texts.append(str(f.value))
+                                    if getattr(e, "footer", None) and getattr(e.footer, "text", None):
+                                        texts.append(e.footer.text)
+                                    if getattr(e, "author", None) and getattr(e.author, "name", None):
+                                        texts.append(e.author.name)
+
+                            text_blob = "\n".join(texts)
+
+                            patterns = [
+                                r"^\s*([^\n]+?)\s+(?:gains\s+[\d,]+\s+Experience\s+and\s+)?levels?\s+up\s+to\s+\*{0,2}(\d{1,2})(?:st|nd|rd|th)\*{0,2}\s+level!?",
+                                r"^\s*([^\n]+?)\s+level(?:ed|led)\s+up\s+to\s+\*{0,2}(\d{1,2})(?:st|nd|rd|th)\*{0,2}\s+level!?",
+                                r"^\s*([^\n]+?)\s+reaches?\s+level\s+\*{0,2}(\d{1,2})\*{0,2}\b",
+                            ]
+
+                            for pat in patterns:
+                                for match in re.findall(pat, text_blob, re.IGNORECASE | re.MULTILINE):
+                                    character_name = match[0].strip()
+                                    level = int(match[1])
+                                    level_ups.append((character_name, level))
                 
                 if level_ups:
                     unique_level_ups = sorted(list(set(level_ups)), key=lambda item: item[1], reverse=True)
