@@ -245,7 +245,7 @@ class Activity(commands.Cog):
             await ctx.send(embed=embed)
 
         if stale:
-            ping_description = "Copy and past the below for your weekly pinging needs\n\n"
+            ping_description = "Copy and paste the below for your weekly pinging needs\n\n"
             ping_description += "```\n## Weekly pings!\nAs usual, this is a friendly check in on those scenes which seem to be slowing down. How's it going? How's life? Are you both communicating and happy with the pace of things? Do you need any help or hand from anyone?\n"
             
             for channel_id in stale:
