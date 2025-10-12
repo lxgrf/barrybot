@@ -52,6 +52,10 @@ class Listeners(commands.Cog):
                     logging.info(f"Embed {i} footer text: {embed.footer.text}")
                 if embed.title:
                     logging.info(f"Embed {i} title: {embed.title}")
+                else:
+                    logging.info(f"Embed {i} has no title")
+                if embed.description:
+                    logging.info(f"Embed {i} description: {embed.description[:100]}...")
         else:
             logging.info("No embeds found")
         
@@ -70,8 +74,15 @@ class Listeners(commands.Cog):
                         character_name = embed.title.strip()
                         logging.info(f"Character name found in embed title: {character_name}")
                         break
+                    # If no title, try to extract from description using the "knows X spells" pattern
+                    elif embed.description:
+                        knows_match = re.search(r"^(.+?) knows \d+ spells?", embed.description)
+                        if knows_match:
+                            character_name = knows_match.group(1).strip()
+                            logging.info(f"Character name found in embed description: {character_name}")
+                            break
             
-            # If not found in embed titles, check message content for old format as fallback
+            # If not found in embed titles/descriptions, check message content for old format as fallback
             if not character_name:
                 title_match = re.search(r"([^']+)'s Spellbook!", message.content)
                 if title_match:
