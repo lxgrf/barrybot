@@ -14,6 +14,10 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        # Safety check: Never respond to our own messages
+        if message.author == self.bot.user:
+            return
+            
         # Check if message is in Silverymoon guild
         if message.guild and message.guild.id == 866376531995918346:
             # Check for spellbook reminder (allow bot messages for this)
