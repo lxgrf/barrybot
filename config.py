@@ -101,6 +101,8 @@ channeltimes = {
 
 nyoom_immunity = [929193107487092798,929193266052759582,940415123527446608,929193302287343727]
 
+nyoom_user_immunity = ["aethelar"]
+
 guild_ids = [866376531995918346]  # Silverymoon server ID
 
 # AI capability enabling

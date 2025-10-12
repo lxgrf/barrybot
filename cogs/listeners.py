@@ -30,9 +30,10 @@ class Listeners(commands.Cog):
             
             # Check for "nyoom" with 2+ o's (only for non-bot messages)
             if message.channel.id not in config.nyoom_immunity:
-                if re.search(r'ny{1,}o{2,}m', message.content.lower()):
-                    await message.add_reaction("🏎️")
-                    await message.reply("## 🏎️ nyooooom 🏎️")
+                if message.author.name not in config.nyoom_user_immunity:
+                    if re.search(r'ny{1,}o{2,}m', message.content.lower()):
+                        await message.add_reaction("🏎️")
+                        await message.reply("## 🏎️ nyooooom 🏎️")
 
     async def _check_spellbook_reminder(self, message):
         """Check if message contains spellbook text and send !sbb reminder if needed."""
