@@ -32,7 +32,7 @@ class Listeners(commands.Cog):
     async def _check_spellbook_reminder(self, message):
         """Check if message contains spellbook text and send !sbb reminder if needed."""
         # Look for the specific text pattern about italicized spells
-        spellbook_pattern = r"An italicized spell indicates that the spell is homebrew\. Asterisks after a spell indicates that the spell is being provided by multiple sources\."
+        spellbook_pattern = r"An italicized spell indicates that the spell is homebrew."
         
         if re.search(spellbook_pattern, message.content):
             # Extract character name from title format: "Character Name's Spellbook!"
