@@ -34,9 +34,30 @@ class Listeners(commands.Cog):
         # Look for the specific text pattern about italicized spells
         spellbook_pattern = r"An italicized spell indicates that the spell is homebrew."
         
-        if re.search(spellbook_pattern, message.content):
+        # Check if the message has embeds and look in footer text
+        footer_text = ""
+        if message.embeds:
+            for embed in message.embeds:
+                if embed.footer and embed.footer.text:
+                    footer_text += embed.footer.text + " "
+        
+        # Check both message content and footer text for the pattern
+        text_to_check = message.content + " " + footer_text
+        
+        if re.search(spellbook_pattern, text_to_check):
             # Extract character name from title format: "Character Name's Spellbook!"
-            title_match = re.search(r"([^']+)'s Spellbook!", message.content)
+            # Check in embed titles first, then message content
+            title_match = None
+            if message.embeds:
+                for embed in message.embeds:
+                    if embed.title:
+                        title_match = re.search(r"([^']+)'s Spellbook!", embed.title)
+                        if title_match:
+                            break
+            
+            # If not found in embed titles, check message content
+            if not title_match:
+                title_match = re.search(r"([^']+)'s Spellbook!", message.content)
             
             if title_match:
                 character_name = title_match.group(1).strip()
