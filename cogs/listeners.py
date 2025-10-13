@@ -52,7 +52,26 @@ class Listeners(commands.Cog):
             # Avrae-specific automated replies (do not ping Dragonspeakers here)
             try:
                 if message.author.bot and message.author.name.lower() == 'avrae':
-                    text_lower = (message.content or "").lower()
+                    # Build a combined text blob from content and embed fields for robust detection
+                    parts = [message.content or ""]
+                    if message.embeds:
+                        for embed in message.embeds:
+                            try:
+                                if getattr(embed, 'title', None):
+                                    parts.append(embed.title)
+                                if getattr(embed, 'description', None):
+                                    parts.append(embed.description)
+                                if getattr(embed, 'footer', None) and getattr(embed.footer, 'text', None):
+                                    parts.append(embed.footer.text)
+                                if getattr(embed, 'fields', None):
+                                    for f in embed.fields:
+                                        parts.append(f.name or "")
+                                        parts.append(f.value or "")
+                            except Exception:
+                                # If embed parsing fails, skip that embed
+                                logging.exception("Failed to parse an embed while checking Avrae triggers")
+
+                    text_lower = "\n".join(parts).lower()
                     # Pattern 1: Go to Marketplace
                     if 'go to marketplace' in text_lower:
                         # concise helpful reply, do not ping role
