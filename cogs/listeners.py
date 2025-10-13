@@ -97,7 +97,20 @@ class Listeners(commands.Cog):
                         if not message.author.bot:
                             try:
                                 dest_channel = self.bot.get_channel(dest_channel_id) or await self.bot.fetch_channel(dest_channel_id)
-                                forward_text = f"Forwarded Dragonspeaker mention from <@{message.author.id}> in <#{message.channel.id}>:\n{message.content}\nMessage: {getattr(message, 'jump_url', '')}"
+                                jump_url = getattr(message, 'jump_url', '') or ''
+                                prefix = f"Forwarded Dragonspeaker mention from <@{message.author.id}> in <#{message.channel.id}>:\n"
+                                # Reserve space for jump_url line and a small safety margin
+                                max_total = 1800
+                                reserved = len(prefix) + len("\nMessage: ") + len(jump_url) + 3
+                                content = message.content or ""
+                                if len(content) + reserved > max_total:
+                                    allowed = max_total - reserved
+                                    if allowed > 0:
+                                        content = content[:allowed] + "... (truncated)"
+                                    else:
+                                        content = "(content omitted - too long)"
+
+                                forward_text = f"{prefix}{content}\nMessage: {jump_url}"
                                 await dest_channel.send(forward_text)
                             except Exception:
                                 logging.exception("Failed to forward Dragonspeaker mention to destination channel")
