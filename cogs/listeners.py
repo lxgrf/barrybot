@@ -77,5 +77,73 @@ class Listeners(commands.Cog):
                     # Simple confirmation log
                     logging.info(f"Reminded {character_name} of !sbb")
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        """Forward ❌ reactions on this bot's messages in Silverymoon to the Dragonspeaker Ping channel.
+
+        Uses raw events so it works when messages aren't cached.
+        """
+        try:
+            # Only care about reactions in Silverymoon guild
+            if payload.guild_id != 866376531995918346:
+                return
+
+            # Ignore if reactor is the bot itself
+            if payload.user_id == self.bot.user.id:
+                return
+
+            # Check for ❌ or common X emoji names
+            emoji_name = getattr(payload.emoji, 'name', None)
+            if emoji_name not in ("❌", "✖", "x", "X"):
+                return
+
+            # Try to fetch the channel and message (may be uncached)
+            try:
+                channel = await self.bot.fetch_channel(payload.channel_id)
+                message = await channel.fetch_message(payload.message_id)
+            except Exception:
+                logging.exception("Failed to fetch channel or message for reaction payload")
+                return
+
+            # Only forward reactions that target messages authored by this bot
+            if message.author.id != self.bot.user.id:
+                return
+
+            # Destination channel to notify (ID provided)
+            dest_channel_id = 1427377070664847441
+            try:
+                dest_channel = self.bot.get_channel(dest_channel_id) or await self.bot.fetch_channel(dest_channel_id)
+            except Exception:
+                logging.exception(f"Failed to get destination channel {dest_channel_id}")
+                return
+
+            author_mention = f"<@{payload.user_id}>"
+            origin_channel_mention = f"<#{payload.channel_id}>"
+            msg_link = getattr(message, 'jump_url', None) or ''
+
+            # Mention Dragonspeaker role
+            dragonspeaker_role_id = 881993444380258377
+            role_mention = f"<@&{dragonspeaker_role_id}>"
+
+            # Reply to the original message to acknowledge the request
+            try:
+                # Don't reply in DMs (shouldn't happen since we checked guild_id above)
+                if message.channel and getattr(message.channel, 'guild', None):
+                    await message.reply(f"Thank you {author_mention} — your request has been noted, and the Dragonspeakers will apply it shortly.")
+            except Exception:
+                logging.exception("Failed to send acknowledgement reply to the reacted message")
+
+            notify_text = (
+                f"{role_mention} ❌ Reaction by {author_mention} on my message in {origin_channel_mention}.\n"
+                f"Message: {msg_link}"
+            )
+
+            await dest_channel.send(notify_text)
+
+        except Exception:
+            logging.exception("Unexpected error in on_raw_reaction_add listener")
+
 def setup(bot):
     bot.add_cog(Listeners(bot)) 
+
+    # Note: on_raw_reaction_add is registered via Cog.listener decorator below
