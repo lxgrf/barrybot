@@ -57,11 +57,11 @@ class Listeners(commands.Cog):
                     if 'go to marketplace' in text_lower:
                         # concise helpful reply, do not ping role
                         if not is_ignored:
-                            await message.reply("It looks like you're trying to use content that D&D Beyond doesn't want you to have. Please ping a `@dragonspeaker` for assistance.\n\nReact with :x: to this message if you'd like to opt out of automated replies")
+                            await message.reply("It looks like you're trying to use content that D&D Beyond doesn't want you to have. Please try using `!aa` instead of `!a`, and if stuck please ping a `@dragonspeaker` for assistance.\n\nReact with :x: to this message if you'd like to opt out of automated replies")
                     # Pattern 2: account not connected message
                     if "it looks like you don't have your discord account connected to your d&d beyond account" in text_lower:
                         if not is_ignored:
-                            await message.reply("It looks like you don't have access to SRD content. Please ping a `@dragonspeaker` for assistance.\n\nReact with :x: to this message if you'd like to opt out of automated replies.")
+                            await message.reply("It looks like you don't have access to SRD content. Please try using `!aa` instead of `!a`, and if stuck please ping a `@dragonspeaker` for assistance.\n\nReact with :x: to this message if you'd like to opt out of automated replies.")
             except Exception:
                 logging.exception("Failed to process Avrae-specific replies")
 
