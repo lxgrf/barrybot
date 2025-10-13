@@ -26,14 +26,64 @@ class Listeners(commands.Cog):
             
             # Skip bot messages for other functionality
             if message.author.bot:
+                # For Avrae bot we still may reply with a helpful note (below), but skip general auto-responses
+                pass
+
+            # Determine if the author is on IGNORE_LIST; ignored users should not receive direct replies
+            is_ignored = False
+            try:
+                if getattr(config, 'IGNORE_LIST', None) and message.author.id in config.IGNORE_LIST:
+                    is_ignored = True
+            except Exception:
+                # If IGNORE_LIST or author.id isn't available, treat as not ignored
+                is_ignored = False
+
+            if message.author.bot and message.author.name.lower() != 'avrae':
                 return
             
             # Check for "nyoom" with 2+ o's (only for non-bot messages)
-            if message.channel.id not in config.nyoom_immunity:
-                if message.author.name not in config.nyoom_user_immunity:
-                    if re.search(r'ny{1,}o{2,}m', message.content.lower()):
-                        await message.add_reaction("🏎️")
-                        await message.reply("## 🏎️ nyooooom 🏎️")
+            if not message.author.bot and not is_ignored:
+                if message.channel.id not in config.nyoom_immunity:
+                    if message.author.name not in config.nyoom_user_immunity:
+                        if re.search(r'ny{1,}o{2,}m', message.content.lower()):
+                            await message.add_reaction("🏎️")
+                            await message.reply("## 🏎️ nyooooom 🏎️")
+
+            # Avrae-specific automated replies (do not ping Dragonspeakers here)
+            try:
+                if message.author.bot and message.author.name.lower() == 'avrae':
+                    text_lower = (message.content or "").lower()
+                    # Pattern 1: Go to Marketplace
+                    if 'go to marketplace' in text_lower:
+                        # concise helpful reply, do not ping role
+                        if not is_ignored:
+                            await message.reply("It looks like you're trying to use content that D&D Beyond doesn't want you to have. Please ping a `@dragonspeaker` for assistance.\n\nReact with :x: to this message if you'd like to opt out of automated replies")
+                    # Pattern 2: account not connected message
+                    if "it looks like you don't have your discord account connected to your d&d beyond account" in text_lower:
+                        if not is_ignored:
+                            await message.reply("It looks like you don't have access to SRD content. Please ping a `@dragonspeaker` for assistance.\n\nReact with :x: to this message if you'd like to opt out of automated replies.")
+            except Exception:
+                logging.exception("Failed to process Avrae-specific replies")
+
+            # Forward any message that mentions Dragonspeaker role to the Dragonspeaker channel
+            try:
+                dragonspeaker_role_id = 881993444380258377
+                dest_channel_id = 1427377070664847441
+
+                # Skip if message is already in the destination channel
+                if message.channel.id != dest_channel_id:
+                    # Check role mentions (works even if role is mentioned via @role)
+                    if any(role.id == dragonspeaker_role_id for role in getattr(message, 'role_mentions', [])) or f"<@&{dragonspeaker_role_id}>" in message.content:
+                        # Don't forward bot messages; allow forwarding even if author is ignored
+                        if not message.author.bot:
+                            try:
+                                dest_channel = self.bot.get_channel(dest_channel_id) or await self.bot.fetch_channel(dest_channel_id)
+                                forward_text = f"Forwarded Dragonspeaker mention from <@{message.author.id}> in <#{message.channel.id}>:\n{message.content}\nMessage: {getattr(message, 'jump_url', '')}"
+                                await dest_channel.send(forward_text)
+                            except Exception:
+                                logging.exception("Failed to forward Dragonspeaker mention to destination channel")
+            except Exception:
+                logging.exception("Error checking for Dragonspeaker mentions in on_message")
 
     async def _check_spellbook_reminder(self, message):
         """Check if message contains spellbook text and send !sbb reminder if needed."""
@@ -69,7 +119,7 @@ class Listeners(commands.Cog):
                 
                 if not last_reminder or (current_time - last_reminder) >= self.sbb_reminder_cooldown:
                     # Send the reminder
-                    await message.reply("💡 **Tip:** You can use `!sbb` as a more reliable alias to see your spellbook!\n\nIt should be less confused by homebrew spells and Avrae's weird choices.")
+                    await message.reply("💡 **Tip:** You can use `!sbb` as a more reliable alias to see your spellbook!\n\nIt should be less confused by homebrew spells and Avrae's weird choices.\n\nIf you would rather not receive this reminder, react to this message with :x: .")
                     
                     # Update the reminder timestamp
                     self.sbb_reminders[character_name] = current_time
@@ -128,7 +178,15 @@ class Listeners(commands.Cog):
             # Reply to the original message to acknowledge the request
             try:
                 # Don't reply in DMs (shouldn't happen since we checked guild_id above)
-                if message.channel and getattr(message.channel, 'guild', None):
+                # Also skip acknowledgement if the reactor is in IGNORE_LIST
+                reactor_ignored = False
+                try:
+                    if getattr(config, 'IGNORE_LIST', None) and payload.user_id in config.IGNORE_LIST:
+                        reactor_ignored = True
+                except Exception:
+                    reactor_ignored = False
+
+                if not reactor_ignored and message.channel and getattr(message.channel, 'guild', None):
                     await message.reply(f"Thank you {author_mention} — your request has been noted, and the Dragonspeakers will apply it shortly.")
             except Exception:
                 logging.exception("Failed to send acknowledgement reply to the reacted message")

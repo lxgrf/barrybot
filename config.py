@@ -105,6 +105,9 @@ nyoom_user_immunity = ["aethelar"]
 
 guild_ids = [866376531995918346]  # Silverymoon server ID
 
+# Users to ignore for automated replies (list of user IDs)
+IGNORE_LIST = []
+
 # AI capability enabling
 ai_enabled_servers = [
     "866376531995918346",  # Silverymoon
