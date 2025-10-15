@@ -61,7 +61,22 @@ class GitHubIssues(commands.Cog):
             'Authorization': f'token {token}',
             'Accept': 'application/vnd.github.v3+json'
         }
-        payload = { 'title': title, 'body': body }
+        # Append context metadata to the issue body so reviewers know where it came from
+        invoker = None
+        try:
+            author = getattr(ctx, 'author', None)
+            invoker = f"{getattr(author, 'name', getattr(author, 'display_name', 'unknown'))}#{getattr(author, 'discriminator', getattr(author, 'id', ''))}"
+        except Exception:
+            invoker = 'unknown'
+
+        guild_name = None
+        try:
+            guild_name = getattr(ctx.guild, 'name', str(getattr(ctx.guild, 'id', 'unknown')))
+        except Exception:
+            guild_name = 'unknown'
+
+        metadata = f"\n\n---\nThis issue was created via Discord by {invoker} in server: {guild_name}."
+        payload = { 'title': title, 'body': (body or '') + metadata }
 
         # Validate label and assignee if provided
         if label:
@@ -104,7 +119,8 @@ class GitHubIssues(commands.Cog):
                 data = resp.json()
                 issue_url = data.get('html_url')
                 embed = Embed(title="Issue created", description=f"[{title}]({issue_url})")
-                await ctx.send(embed=embed, hidden=True)
+                # make confirmation visible to all
+                await ctx.send(embed=embed)
                 logger.info(f"Created GitHub issue {issue_url}")
             else:
                 logger.error(f"GitHub API returned {resp.status_code}: {resp.text}")
