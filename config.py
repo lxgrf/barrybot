@@ -128,3 +128,6 @@ egg_categories = [
 ]
 
 POSTS_FILE = "/data/random_posts.json" 
+
+# GitHub issues integration
+GITHUB_ISSUE_REPO = "scions-of-silverymoon/avrae"  # e.g. "owner/repo" - leave empty to disable

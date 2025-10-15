@@ -23,11 +23,6 @@ class Listeners(commands.Cog):
         if message.guild and message.guild.id == 866376531995918346:
             # Check for spellbook reminder (allow bot messages for this)
             await self._check_spellbook_reminder(message)
-            
-            # Skip bot messages for other functionality
-            if message.author.bot:
-                # For Avrae bot we still may reply with a helpful note (below), but skip general auto-responses
-                pass
 
             # Determine if the author is on IGNORE_LIST; ignored users should not receive direct replies
             is_ignored = False
