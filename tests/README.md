@@ -38,6 +38,7 @@ python -m pytest tests/test_utils.py
 
 - `test_config.py` - Tests for configuration validation (config.py)
 - `test_utils.py` - Tests for utility functions (utils.py)
+- `test_integration_examples.py` - Example integration tests (skipped by default)
 
 ## CI/CD Integration
 
