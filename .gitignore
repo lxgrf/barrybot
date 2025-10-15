@@ -3,3 +3,19 @@ keys*
 .python-version
 .env
 random_posts.json
+
+# Test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

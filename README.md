@@ -83,6 +83,32 @@ The bot is configured via the `config.py` file. Here you can define:
 
 Refer to the comments in `config.py` for detailed explanations of each setting.
 
+## Testing
+
+BarryBot includes a comprehensive test suite to ensure code quality and prevent regressions.
+
+### Running Tests
+
+```bash
+# Install test dependencies
+pip install -r requirements-dev.txt
+
+# Run all tests
+python -m pytest tests/
+
+# Run tests with coverage
+python -m pytest tests/ --cov=. --cov-report=html
+```
+
+See `tests/README.md` for more detailed testing information.
+
+### Continuous Integration
+
+Tests are automatically run on all pull requests via GitHub Actions. The CI workflow ensures that:
+- All unit tests pass
+- Configuration is valid
+- Code changes don't introduce regressions
+
 ## Contributing
 
 For bugs, feature requests, or other contributions, please open an issue or contact the repository owner.
