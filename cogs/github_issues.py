@@ -22,6 +22,18 @@ class GitHubIssues(commands.Cog):
     async def issue(self, ctx: SlashContext, title: str, body: str = "", label: str = None, assignee: str = None):
         await ctx.defer(hidden=True)
 
+        # Restrict command to configured AI-enabled servers
+        try:
+            allowed = getattr(config, 'ai_enabled_servers', [])
+            guild_id_str = str(ctx.guild.id) if getattr(ctx, 'guild', None) else None
+            if guild_id_str not in allowed:
+                await ctx.send(embed=Embed(title="Unavailable", description="This command is not enabled in this server."), hidden=True)
+                return
+        except Exception:
+            # If we can't determine the guild, deny for safety
+            await ctx.send(embed=Embed(title="Unavailable", description="Could not verify server eligibility."), hidden=True)
+            return
+
         repo = getattr(config, 'GITHUB_ISSUE_REPO', '')
         if not repo:
             await ctx.send(embed=Embed(title="Error", description="GitHub issue repository is not configured."), hidden=True)
