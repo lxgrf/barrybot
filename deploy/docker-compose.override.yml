@@ -1,0 +1,6 @@
+services:
+  barry:
+    build:
+      context: ..
+      dockerfile: ../dockerfile
+    image: local/barrybot:dev
