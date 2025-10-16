@@ -1,6 +1,7 @@
 import re
 import time
 import logging
+from collections import deque
 from discord.ext import commands
 import config
 
@@ -12,6 +13,81 @@ class Listeners(commands.Cog):
         self.sbb_reminders = {}
         # Cooldown period in seconds (24 hours)
         self.sbb_reminder_cooldown = 24 * 60 * 60
+        # Track recent user messages per channel to associate with Avrae responses
+        # Format: {channel_id: deque([(user_id, username, timestamp), ...])}
+        # We keep the last 10 messages per channel
+        self.recent_user_messages = {}
+
+    def _track_user_message(self, message):
+        """Track a user message in the channel history for later association with Avrae responses."""
+        if message.author.bot:
+            return
+            
+        channel_id = message.channel.id
+        
+        # Initialize deque for this channel if it doesn't exist
+        if channel_id not in self.recent_user_messages:
+            self.recent_user_messages[channel_id] = deque(maxlen=10)
+        
+        # Store user info with timestamp
+        self.recent_user_messages[channel_id].append({
+            'user_id': message.author.id,
+            'username': message.author.name.lower(),
+            'timestamp': time.time()
+        })
+
+    def _get_recent_user_in_channel(self, channel_id, max_age_seconds=10):
+        """Get the most recent user who posted in this channel within the time window.
+        
+        Args:
+            channel_id: The channel ID to check
+            max_age_seconds: Maximum age of message in seconds (default 10)
+            
+        Returns:
+            dict with user_id and username, or None if no recent user found
+        """
+        if channel_id not in self.recent_user_messages:
+            return None
+            
+        current_time = time.time()
+        
+        # Check messages from most recent to oldest
+        for msg_info in reversed(self.recent_user_messages[channel_id]):
+            if current_time - msg_info['timestamp'] <= max_age_seconds:
+                return msg_info
+        
+        return None
+
+    def _is_user_ignored(self, user_id=None, username=None):
+        """Check if a user is in the IGNORE_LIST.
+        
+        IGNORE_LIST can contain either user IDs (integers) or usernames (strings).
+        
+        Args:
+            user_id: The user's Discord ID
+            username: The user's username (lowercase)
+            
+        Returns:
+            bool: True if user is ignored, False otherwise
+        """
+        ignore_list = getattr(config, 'IGNORE_LIST', None)
+        if not ignore_list:
+            return False
+            
+        try:
+            # Check if user_id is in the list (for integer IDs)
+            if user_id is not None and user_id in ignore_list:
+                return True
+            
+            # Check if username is in the list (for string usernames)
+            if username is not None and username in ignore_list:
+                return True
+                
+        except Exception:
+            # If there's any error checking the list, treat as not ignored
+            pass
+            
+        return False
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -21,32 +97,42 @@ class Listeners(commands.Cog):
             
         # Check if message is in Silverymoon guild
         if message.guild and message.guild.id == 866376531995918346:
+            # Track user messages for later association with Avrae responses
+            if not message.author.bot:
+                self._track_user_message(message)
+            
             # Check for spellbook reminder (allow bot messages for this)
             await self._check_spellbook_reminder(message)
-
-            # Determine if the author is on IGNORE_LIST; ignored users should not receive direct replies
-            is_ignored = False
-            try:
-                if getattr(config, 'IGNORE_LIST', None) and message.author.id in config.IGNORE_LIST:
-                    is_ignored = True
-            except Exception:
-                # If IGNORE_LIST or author.id isn't available, treat as not ignored
-                is_ignored = False
 
             if message.author.bot and message.author.name.lower() != 'avrae':
                 return
             
             # Check for "nyoom" with 2+ o's (only for non-bot messages)
-            if not message.author.bot and not is_ignored:
-                if message.channel.id not in config.nyoom_immunity:
-                    if message.author.name not in config.nyoom_user_immunity:
-                        if re.search(r'ny{1,}o{2,}m', message.content.lower()):
-                            await message.add_reaction("🏎️")
-                            await message.reply("## 🏎️ nyooooom 🏎️")
+            if not message.author.bot:
+                # Get the actual user (not bot) for ignore checking
+                user_id = message.author.id
+                username = message.author.name.lower()
+                is_ignored = self._is_user_ignored(user_id=user_id, username=username)
+                
+                if not is_ignored:
+                    if message.channel.id not in config.nyoom_immunity:
+                        if message.author.name not in config.nyoom_user_immunity:
+                            if re.search(r'ny{1,}o{2,}m', message.content.lower()):
+                                await message.add_reaction("🏎️")
+                                await message.reply("## 🏎️ nyooooom 🏎️")
 
             # Avrae-specific automated replies (do not ping Dragonspeakers here)
             try:
                 if message.author.bot and message.author.name.lower() == 'avrae':
+                    # For Avrae messages, we need to find the user who triggered them
+                    recent_user = self._get_recent_user_in_channel(message.channel.id)
+                    
+                    # Check if the triggering user is ignored
+                    is_ignored = recent_user and self._is_user_ignored(
+                        user_id=recent_user['user_id'],
+                        username=recent_user['username']
+                    )
+                    
                     # Build a combined text blob from content and embed fields for robust detection
                     parts = [message.content or ""]
                     if message.embeds:
@@ -207,11 +293,18 @@ class Listeners(commands.Cog):
                 # Don't reply in DMs (shouldn't happen since we checked guild_id above)
                 # Also skip acknowledgement if the reactor is in IGNORE_LIST
                 reactor_ignored = False
+                
+                # Try to get reactor's username for checking
                 try:
-                    if getattr(config, 'IGNORE_LIST', None) and payload.user_id in config.IGNORE_LIST:
-                        reactor_ignored = True
+                    reactor_user = await self.bot.fetch_user(payload.user_id)
+                    reactor_username = reactor_user.name.lower() if reactor_user else None
                 except Exception:
-                    reactor_ignored = False
+                    reactor_username = None
+                
+                reactor_ignored = self._is_user_ignored(
+                    user_id=payload.user_id,
+                    username=reactor_username
+                )
 
                 if not reactor_ignored and message.channel and getattr(message.channel, 'guild', None):
                     await message.reply(f"Thank you {author_mention} — your request has been noted, and the Dragonspeakers will apply it shortly.")
