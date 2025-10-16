@@ -12,7 +12,7 @@ import sys
 sys.modules['discord'] = MagicMock()
 sys.modules['discord.ext'] = MagicMock()
 sys.modules['discord.ext.commands'] = MagicMock()
-sys.modules['discord_slash'] = MagicMock()
+sys.modules['discord.app_commands'] = MagicMock()
 sys.modules['anthropic'] = MagicMock()
 
 
@@ -33,7 +33,10 @@ class TestBotInitialization:
         with open('./main.py', 'r') as f:
             content = f.read()
             assert 'discord.ext' in content
-            assert 'bot.load_extension' in content
+            assert 'load_extension' in content
+            # Verify discord.py 2.x patterns
+            assert 'asyncio' in content
+            assert 'bot.tree.sync' in content
 
 
 @pytest.mark.skip(reason="Example test - requires extensive mocking")

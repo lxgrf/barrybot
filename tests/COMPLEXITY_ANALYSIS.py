@@ -24,21 +24,21 @@ class TestPromptsCogsimple:
         
         MOCKING REQUIRED:
         - Bot instance
-        - SlashContext with guild, author, channel
+        - Interaction object with guild, user, channel
         - Guild object with ID
-        - ctx.defer() method
-        - ctx.send() method
+        - interaction.response.defer() method
+        - interaction.followup.send() method
         - Embed object
         """
         # Mock the bot
         mock_bot = MagicMock()
         
-        # Mock the context
-        mock_ctx = AsyncMock()
-        mock_ctx.guild = Mock()
-        mock_ctx.guild.id = 123456789  # Mock guild ID
-        mock_ctx.defer = AsyncMock()  # All interactions need to be async
-        mock_ctx.send = AsyncMock()
+        # Mock the interaction
+        mock_interaction = AsyncMock()
+        mock_interaction.guild = Mock()
+        mock_interaction.guild.id = 123456789  # Mock guild ID
+        mock_interaction.response.defer = AsyncMock()  # All interactions need to be async
+        mock_interaction.followup.send = AsyncMock()
         
         # Import and instantiate the cog (after mocking Discord)
         # This requires sys.modules mocking for discord, discord.ext, etc.
@@ -46,11 +46,11 @@ class TestPromptsCogsimple:
         # prompts_cog = Prompts(mock_bot)
         
         # Call the command
-        # await prompts_cog.help(mock_ctx)
+        # await prompts_cog.help(mock_interaction)
         
         # Verify behavior
-        # mock_ctx.defer.assert_called_once()
-        # mock_ctx.send.assert_called_once()
+        # mock_interaction.response.defer.assert_called_once()
+        # mock_interaction.followup.send.assert_called_once()
         # Verify the embed content...
         pass
 
@@ -66,7 +66,7 @@ class TestActivityCogAuthorization:
         Testing authorization requires even MORE mocking.
         
         ADDITIONAL MOCKING REQUIRED:
-        - ctx.author with roles attribute
+        - interaction.user with roles attribute
         - Multiple Role objects with name attributes
         - Guild members list
         - Each member with roles
@@ -74,28 +74,28 @@ class TestActivityCogAuthorization:
         - config.monitored_channels dict
         """
         mock_bot = MagicMock()
-        mock_ctx = AsyncMock()
+        mock_interaction = AsyncMock()
         
         # Mock the guild
-        mock_ctx.guild = Mock()
-        mock_ctx.guild.id = 866376531995918346
+        mock_interaction.guild = Mock()
+        mock_interaction.guild.id = 866376531995918346
         
-        # Mock the author with roles (NOT authorized)
+        # Mock the user with roles (NOT authorized)
         mock_role1 = Mock()
         mock_role1.name = "Member"
         mock_role2 = Mock()
         mock_role2.name = "Player"
-        mock_ctx.author = Mock()
-        mock_ctx.author.roles = [mock_role1, mock_role2]
+        mock_interaction.user = Mock()
+        mock_interaction.user.roles = [mock_role1, mock_role2]
         
-        # Mock context methods
-        mock_ctx.defer = AsyncMock()
-        mock_ctx.send = AsyncMock()
+        # Mock interaction methods
+        mock_interaction.response.defer = AsyncMock()
+        mock_interaction.followup.send = AsyncMock()
         
         # Import and test
         # from cogs.activity import Activity
         # activity_cog = Activity(mock_bot)
-        # await activity_cog.useractivity(mock_ctx)
+        # await activity_cog.useractivity(mock_interaction)
         
         # Should have sent the "unauthorized" embed
         # assert mock_ctx.send.called

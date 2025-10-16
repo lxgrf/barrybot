@@ -54,15 +54,15 @@ THREE APPROACHES TO COG TESTING:
    Example refactor:
    
    # Before (hard to test):
-   async def useractivity(self, ctx: SlashContext):
-       await ctx.defer()
-       if ctx.guild.id not in config.monitored_channels.keys():
-           embed = _server_error(ctx)
-           await ctx.send(embed=embed)
+   async def useractivity(self, interaction: discord.Interaction):
+       await interaction.response.defer()
+       if interaction.guild.id not in config.monitored_channels.keys():
+           embed = _server_error(interaction)
+           await interaction.followup.send(embed=embed)
            return
        
        authorised = False
-       for role in ctx.author.roles:
+       for role in interaction.user.roles:
            if role.name in config.authorised_roles:
                authorised = True
        # ... 200 more lines of logic
@@ -81,17 +81,17 @@ THREE APPROACHES TO COG TESTING:
            activity_counts[msg.author.id] += 1
        return activity_counts
    
-   async def useractivity(self, ctx: SlashContext):
-       await ctx.defer()
-       if ctx.guild.id not in config.monitored_channels.keys():
-           embed = _server_error(ctx)
-           await ctx.send(embed=embed)
+   async def useractivity(self, interaction: discord.Interaction):
+       await interaction.response.defer()
+       if interaction.guild.id not in config.monitored_channels.keys():
+           embed = _server_error(interaction)
+           await interaction.followup.send(embed=embed)
            return
        
        # Use testable functions
-       if not check_user_authorization(ctx.author.roles, config.authorised_roles):
+       if not check_user_authorization(interaction.user.roles, config.authorised_roles):
            embed = _authorised_user()
-           await ctx.send(embed=embed)
+           await interaction.followup.send(embed=embed)
            return
        
        messages = await self._fetch_messages(...)
