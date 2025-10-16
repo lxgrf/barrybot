@@ -128,12 +128,10 @@ class Listeners(commands.Cog):
                     recent_user = self._get_recent_user_in_channel(message.channel.id)
                     
                     # Check if the triggering user is ignored
-                    is_ignored = False
-                    if recent_user:
-                        is_ignored = self._is_user_ignored(
-                            user_id=recent_user['user_id'],
-                            username=recent_user['username']
-                        )
+                    is_ignored = recent_user and self._is_user_ignored(
+                        user_id=recent_user['user_id'],
+                        username=recent_user['username']
+                    )
                     
                     # Build a combined text blob from content and embed fields for robust detection
                     parts = [message.content or ""]
