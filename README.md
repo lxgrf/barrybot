@@ -2,6 +2,8 @@
 
 A Discord bot designed to enhance and manage roleplaying servers, with a focus on AI-powered tools and activity tracking.
 
+> **Note:** This bot has been migrated to discord.py 2.x with native slash command support. See `MIGRATION_NOTES.md` for technical details.
+
 ## Features
 
 -   **AI-Powered Scene Summaries**: Generate "Too Long; Didn't Read" (TL;DR) summaries of roleplay scenes using the Anthropic Claude AI. This requires all participants to opt-in.
@@ -43,8 +45,7 @@ Commands are grouped by their respective cogs.
 
 ## Technologies Used
 
--   [discord.py](https://github.com/Rapptz/discord.py)
--   [discord-py-slash-command](https://github.com/eunwoo1104/discord-py-slash-command)
+-   [discord.py](https://github.com/Rapptz/discord.py) (v2.x with native slash commands)
 -   [Anthropic API](https://www.anthropic.com/): Powers the AI summarisation and prompt generation features.
 
 ## Setup and Installation
