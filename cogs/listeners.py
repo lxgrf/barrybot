@@ -228,7 +228,5 @@ class Listeners(commands.Cog):
         except Exception:
             logging.exception("Unexpected error in on_raw_reaction_add listener")
 
-def setup(bot):
-    bot.add_cog(Listeners(bot)) 
-
-    # Note: on_raw_reaction_add is registered via Cog.listener decorator below
+async def setup(bot):
+    await bot.add_cog(Listeners(bot))
