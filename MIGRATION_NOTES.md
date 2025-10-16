@@ -161,6 +161,7 @@ All existing tests pass with the new version:
 ## Backward Compatibility
 
 The changes are **not backward compatible** with discord.py 1.x. This is a full migration to 2.x.
+Additionally, the `NoMoreItems` exception has been removed in discord.py 2.x. Ensure that your code handles cases where this exception was previously used.
 
 ## Benefits of Migration
 

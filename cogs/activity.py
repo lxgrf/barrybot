@@ -3,7 +3,9 @@ import logging
 import re
 import discord
 from discord import app_commands, Embed
-from discord.errors import NoMoreItems
+# discord.py removed the `NoMoreItems` exception in newer releases; the
+# async iterator `.next()` now raises the built-in StopAsyncIteration when
+# exhausted. Use that for compatibility.
 from discord.ext import commands
 import config
 from utils import _server_error, _authorised_user, get_recent_messages_reversed
@@ -217,7 +219,7 @@ class Activity(commands.Cog):
             messages = channel.history(limit=1)
             try:
                 message = await messages.next()
-            except NoMoreItems:
+            except StopAsyncIteration:
                 # Channel has no messages; skip reporting
                 continue
             messageTime = message.created_at
