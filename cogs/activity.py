@@ -1,10 +1,10 @@
 import datetime
 import logging
 import re
-from discord import Embed
+import discord
+from discord import app_commands, Embed
 from discord.errors import NoMoreItems
 from discord.ext import commands
-from discord_slash import cog_ext, SlashContext
 import config
 from utils import _server_error, _authorised_user, get_recent_messages_reversed
 
@@ -14,31 +14,31 @@ class Activity(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cog_ext.cog_slash(name="useractivity", description="See the RP activity of users.")
-    async def useractivity(self, ctx: SlashContext):
-        await ctx.defer()
-        if ctx.guild.id not in config.monitored_channels.keys():
-            embed = _server_error(ctx)
-            await ctx.send(embed=embed)
+    @app_commands.command(name="useractivity", description="See the RP activity of users.")
+    async def useractivity(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if interaction.guild.id not in config.monitored_channels.keys():
+            embed = _server_error(interaction)
+            await interaction.followup.send(embed=embed)
             return
 
         authorised = False
-        for role in ctx.author.roles:
+        for role in interaction.user.roles:
             if role.name in config.authorised_roles:
                 authorised = True
         if not authorised:
             embed = _authorised_user()
-            await ctx.send(embed=embed)
+            await interaction.followup.send(embed=embed)
             return
 
-        active = [user.id for user in ctx.guild.members if any(role.name in config.include_role for role in user.roles) and not any(role.name in config.exclude_role for role in user.roles)]
+        active = [user.id for user in interaction.guild.members if any(role.name in config.include_role for role in user.roles) and not any(role.name in config.exclude_role for role in user.roles)]
 
         one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=config.inactivity_threshold)
         fourteen_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=config.warning_threshold)
         
         channel_histories_new = {}
         channel_histories_old = {}
-        for channel_id in config.monitored_channels[ctx.guild.id]:
+        for channel_id in config.monitored_channels[interaction.guild.id]:
             channel = self.bot.get_channel(int(channel_id))
             if not channel:
                 # Channel not found or inaccessible; skip safely
@@ -97,9 +97,9 @@ class Activity(commands.Cog):
                 description += f"<@{user}>: {total_activity[user]}\n"
 
         embed = Embed(title="User Activity in RP Channels", description=description)
-        await ctx.send(embed=embed)
+        await interaction.followup.send(embed=embed)
 
-        if ctx.guild.id == 866376531995918346:  # Silverymoon server
+        if interaction.guild.id == 866376531995918346:  # Silverymoon server
             logger.info("Checking for level-ups in Silverymoon server")
             level_up_channel_ids = [866544281408897024, 866544082331369472, 881218238170665043] 
             two_weeks_ago = datetime.datetime.utcnow() - datetime.timedelta(days=14)
@@ -149,17 +149,17 @@ class Activity(commands.Cog):
                     unique_level_ups = sorted(list(set(level_ups)), key=lambda item: item[1], reverse=True)
                     level_up_description = "Level-ups in the last two weeks:\n" + "\n".join([f"- {name} reached level {level}!" for name, level in unique_level_ups])
                     level_up_embed = Embed(title="Recent Level-ups", description=level_up_description)
-                    await ctx.send(embed=level_up_embed)
+                    await interaction.followup.send(embed=level_up_embed)
                 else:
                     level_up_embed = Embed(title="Recent Level-ups", description="No level-ups found in the last two weeks.")
-                    await ctx.send(embed=level_up_embed)
+                    await interaction.followup.send(embed=level_up_embed)
             except Exception as e:
                 logger.error(f"Error checking level-ups: {str(e)}")
 
         description = ""
         six_months_ago = datetime.datetime.utcnow() - datetime.timedelta(days=180)
 
-        for channel_id in config.monitored_channels[ctx.guild.id]:
+        for channel_id in config.monitored_channels[interaction.guild.id]:
             channel = self.bot.get_channel(int(channel_id))
             if not channel:
                 # Channel not found or inaccessible; skip safely
@@ -187,26 +187,26 @@ class Activity(commands.Cog):
 
         if description:
             embed = Embed(title="Inactive User Deep Dive", description=description)
-            await ctx.send(embed=embed)
+            await interaction.followup.send(embed=embed)
 
-    @cog_ext.cog_slash(name="channelactivity", description="Get the time of the last message in a channel.")
-    async def channelactivity(self, ctx: SlashContext):
-        await ctx.defer()
-        if ctx.guild.id not in config.monitored_channels.keys():
-            embed = _server_error(ctx)
-            await ctx.send(embed=embed)
+    @app_commands.command(name="channelactivity", description="Get the time of the last message in a channel.")
+    async def channelactivity(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if interaction.guild.id not in config.monitored_channels.keys():
+            embed = _server_error(interaction)
+            await interaction.followup.send(embed=embed)
             return
         
         authorised = False
-        for role in ctx.author.roles:
+        for role in interaction.user.roles:
             if role.name in config.authorised_roles:
                 authorised = True
         if not authorised:
             embed = _authorised_user()
-            await ctx.send(embed=embed)
+            await interaction.followup.send(embed=embed)
             return
         
-        channel_list = config.monitored_channels[ctx.guild.id]
+        channel_list = config.monitored_channels[interaction.guild.id]
         description = ""
         active = []
         inactive = []
@@ -224,9 +224,9 @@ class Activity(commands.Cog):
             timeElapsed = datetime.datetime.utcnow() - messageTime
             author = message.author
             status = ":green_circle:"
-            if timeElapsed > datetime.timedelta(days=config.channeltimes[ctx.guild.id]["yellow"]):
+            if timeElapsed > datetime.timedelta(days=config.channeltimes[interaction.guild.id]["yellow"]):
                 status = ":yellow_circle:"     
-            if timeElapsed > datetime.timedelta(days=config.channeltimes[ctx.guild.id]["red"]):
+            if timeElapsed > datetime.timedelta(days=config.channeltimes[interaction.guild.id]["red"]):
                 status = ":red_circle:"
                 if message.author.name != "Avrae":
                     stale.append(channel_id)
@@ -242,7 +242,7 @@ class Activity(commands.Cog):
         if active:
             description = "# Active channels:\n(Channels with an ongoing RP scene)\n\n" + "".join(active)
             embed = Embed(title="Last message", description=description)
-            await ctx.send(embed=embed)
+            await interaction.followup.send(embed=embed)
 
         if stale:
             ping_description = "Copy and paste the below for your weekly pinging needs\n\n"
@@ -261,10 +261,10 @@ class Activity(commands.Cog):
                 ping_description += f"<#{channel_id}>: ({users_mentions})\n"
             ping_description += "```"
             embed = Embed(title="Ping Post", description=ping_description)
-            await ctx.send(embed=embed)
+            await interaction.followup.send(embed=embed)
         else:
             embed = Embed(title="Ping Post", description="Good news! No stale channels were found. Everyone is playing nicely!")
-            await ctx.send(embed=embed)
+            await interaction.followup.send(embed=embed)
 
-def setup(bot):
-    bot.add_cog(Activity(bot)) 
+async def setup(bot):
+    await bot.add_cog(Activity(bot)) 

@@ -1,7 +1,6 @@
 import discord
-from discord import Embed, File
+from discord import app_commands, Embed, File
 from discord.ext import commands
-from discord_slash import cog_ext, SlashContext, manage_commands
 import config
 from utils import _server_error, claude_call
 import logging
@@ -12,39 +11,40 @@ class Summaries(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cog_ext.cog_slash(name="tldr",description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality.",
-             options=[
-                      manage_commands.create_option(name="startmessageid", description="Message ID or link for the start of the scene", option_type=3, required=True),
-                      manage_commands.create_option(name="endmessageid", description="Message ID or link for the end of the scene", option_type=3, required=True),
-                      manage_commands.create_option(name="scenetitle", description="Title for the scene, if preferred", option_type=3, required=False)
-                      ])
-    async def tldr(self, ctx: SlashContext, scenetitle, startmessageid, endmessageid):
-        await ctx.defer(hidden=True)
-        if str(ctx.guild.id) not in config.guilds:
-            embed = _server_error(ctx)
-            await ctx.send(embed=embed,hidden=True)
+    @app_commands.command(name="tldr", description="Summarise the scene above. Requires all scene contributors to have opted in to this functionality.")
+    @app_commands.describe(
+        startmessageid="Message ID or link for the start of the scene",
+        endmessageid="Message ID or link for the end of the scene",
+        scenetitle="Title for the scene, if preferred"
+    )
+    async def tldr(self, interaction: discord.Interaction, startmessageid: str, endmessageid: str, scenetitle: str = None):
+        await interaction.response.defer(ephemeral=True)
+        
+        if str(interaction.guild.id) not in config.guilds:
+            embed = _server_error(interaction)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
-        elif ctx.channel.id not in config.monitored_channels[ctx.guild.id] and ctx.channel.id not in config.tldr_additional_channels[ctx.guild.id]:
+        elif interaction.channel.id not in config.monitored_channels[interaction.guild.id] and interaction.channel.id not in config.tldr_additional_channels[interaction.guild.id]:
             title = "Error - Channel not monitored."
             description = f"This channel is not monitored for RP activity. Please contact `@lxgrf` if you believe this is in error."
             embed = Embed(title=title, description=description)
-            await ctx.send(embed=embed,hidden=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
-        elif ctx.channel.id in config.tldr_excluded_channels[ctx.guild.id]:
+        elif interaction.channel.id in config.tldr_excluded_channels[interaction.guild.id]:
             title = "Error - Channel excluded."
             description = f"This channel is excluded from TL;DR summaries. Please contact `@lxgrf` if you believe this is in error."
             embed = Embed(title=title, description=description)
-            await ctx.send(embed=embed,hidden=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
-        channel = self.bot.get_channel(ctx.channel.id)
+        channel = self.bot.get_channel(interaction.channel.id)
         messages = [message async for message in channel.history(limit=1)]
         if len(messages) == 0:
             description = "No messages in this channel."
             embed = Embed(title="TL;DR", description=description)
-            await ctx.send(embed=embed, hidden=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
         
         new_messages = []
@@ -57,7 +57,7 @@ class Summaries(commands.Cog):
         except:
             description = "Message IDs/Links should be numbers or URLs. Please ensure you have copied them correctly."
             embed = Embed(title="Export", description=description)
-            await ctx.send(embed=embed, hidden=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
             
         messages = [message async for message in channel.history(limit=1000)]
@@ -65,7 +65,7 @@ class Summaries(commands.Cog):
         if startmessageid not in [message.id for message in messages] or endmessageid not in [message.id for message in messages]:
             description = "The start and end messages IDs for this scene could not be found. Please ensure they are in this channel and copied correctly."
             embed = Embed(title="TL;DR", description=description)
-            await ctx.send(embed=embed, hidden=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
         start_index = -1
@@ -79,13 +79,13 @@ class Summaries(commands.Cog):
         if start_index != -1 and end_index != -1:
             new_messages = messages[start_index:end_index+1]
 
-        opt_in_role = config.opt_in_roles[ctx.guild_id]
+        opt_in_role = config.opt_in_roles[interaction.guild_id]
         authors = {message.author.id for message in new_messages}
 
-        opted_in = [user.id for user in ctx.guild.members if opt_in_role in [role.name for role in user.roles]]
+        opted_in = [user.id for user in interaction.guild.members if opt_in_role in [role.name for role in user.roles]]
 
         bot_roles = ["Avrae","Bots"]
-        bots = [user.id for user in ctx.guild.members if any(role in bot_roles for role in [role.name for role in user.roles])]
+        bots = [user.id for user in interaction.guild.members if any(role in bot_roles for role in [role.name for role in user.roles])]
         authors = authors - set(bots)
 
         if any(author not in opted_in for author in authors):    
@@ -93,7 +93,7 @@ class Summaries(commands.Cog):
             missing_users = [f'<@{author}>' for author in authors if author not in opted_in]
             description = f"AI Generated summaries require all participants in a scene to have the `{opt_in_role}` role. The following users are missing this role: {', '.join(missing_users)}. Please contact `@lxgrf` if you believe there is an error."
             embed = Embed(title=title, description=description)
-            await ctx.send(embed=embed, hidden=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
         scenetitle = "Give the scene a title" if not scenetitle else f"Title the scene: {scenetitle}"
@@ -108,24 +108,26 @@ class Summaries(commands.Cog):
 
         embed = Embed(title="TL;DR", description=description)
 
-        summaryChannel = self.bot.get_channel(config.tldr_output_channels[ctx.guild_id])
-        await ctx.send(embed=Embed(title="TL;DR", description="Summary delivered!"), hidden=True)
+        summaryChannel = self.bot.get_channel(config.tldr_output_channels[interaction.guild_id])
+        await interaction.followup.send(embed=Embed(title="TL;DR", description="Summary delivered!"), ephemeral=True)
         await summaryChannel.send(embed=embed)
         logger.info("Scene summary delivered!")
 
-    @cog_ext.cog_slash(name="export",description="Export the scene above to a text file.",
-             options=[manage_commands.create_option(name="startmessageid", description="Message ID or Link for the start of the scene", option_type=3, required=False),
-                      manage_commands.create_option(name="endmessageid", description="Message ID or Link for the end of the scene", option_type=3, required=False)])
-    async def export(self, ctx: SlashContext, startmessageid="", endmessageid=""):
-        await ctx.defer(hidden=True)
-        channel = self.bot.get_channel(ctx.channel.id)
+    @app_commands.command(name="export", description="Export the scene above to a text file.")
+    @app_commands.describe(
+        startmessageid="Message ID or Link for the start of the scene",
+        endmessageid="Message ID or Link for the end of the scene"
+    )
+    async def export(self, interaction: discord.Interaction, startmessageid: str = "", endmessageid: str = ""):
+        await interaction.response.defer(ephemeral=True)
+        channel = self.bot.get_channel(interaction.channel.id)
         new_messages = []
 
         if not (startmessageid or endmessageid):
             messages = [message async for message in channel.history(limit=10000)]
             messages = messages[::-1]
             if not messages:
-                await ctx.send(embed=Embed(title="Export", description="No messages in this channel."), hidden=True)
+                await interaction.followup.send(embed=Embed(title="Export", description="No messages in this channel."), ephemeral=True)
                 return
 
             if messages[-1].author.name == "Avrae":
@@ -139,21 +141,22 @@ class Summaries(commands.Cog):
                 new_messages = messages
         else:
             try:
+                channelid = interaction.channel.id
                 if "discord" in startmessageid: 
                     channelid = int(startmessageid.split("/")[-2])
                     startmessageid = int(startmessageid.split("/")[-1])
                 if "discord" in endmessageid:
                     if channelid != int(endmessageid.split("/")[-2]):
-                        await ctx.send(embed=Embed(title="Export", description = "Start and end messages need to both be in the same channel, for obvious reasons."), hidden=True)
+                        await interaction.followup.send(embed=Embed(title="Export", description = "Start and end messages need to both be in the same channel, for obvious reasons."), ephemeral=True)
                         return
                     endmessageid = int(endmessageid.split("/")[-1])
                 
                 channel = await self.bot.fetch_channel(channelid)
             except (discord.NotFound, discord.Forbidden):
-                await ctx.send(embed=Embed(title="Export", description="Could not fetch the specified channel."), hidden=True)
+                await interaction.followup.send(embed=Embed(title="Export", description="Could not fetch the specified channel."), ephemeral=True)
                 return
             except:
-                await ctx.send(embed=Embed(title="Export", description="Message IDs/Links should be numbers or URLs."), hidden=True)
+                await interaction.followup.send(embed=Embed(title="Export", description="Message IDs/Links should be numbers or URLs."), ephemeral=True)
                 return
 
             messages = [message async for message in channel.history(limit=10000)]
@@ -162,22 +165,22 @@ class Summaries(commands.Cog):
             start_index = -1
             end_index = -1
             for i, message in enumerate(messages):
-                if message.id == startmessageid:
+                if message.id == int(startmessageid):
                     start_index = i
-                if message.id == endmessageid:
+                if message.id == int(endmessageid):
                     end_index = i
 
             if start_index == -1 or end_index == -1:
-                await ctx.send(embed=Embed(title="Export", description="Could not find start or end message."), hidden=True)
+                await interaction.followup.send(embed=Embed(title="Export", description="Could not find start or end message."), ephemeral=True)
                 return
             
             new_messages = messages[start_index:end_index+1]
         
-        filename = f"{ctx.channel.name}_scene.txt"
+        filename = f"{interaction.channel.name}_scene.txt"
         with open(filename, "w") as file:
             for message in new_messages:
                 file.write(f"{message.author.name}\n-----\n {message.content}\n===============\n")
-        await ctx.send(file=File(filename), hidden=True)
+        await interaction.followup.send(file=File(filename), ephemeral=True)
 
-def setup(bot):
-    bot.add_cog(Summaries(bot)) 
+async def setup(bot):
+    await bot.add_cog(Summaries(bot)) 
