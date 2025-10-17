@@ -48,3 +48,13 @@ def requires_not_ignored(func: TFunc) -> TFunc:
 
     return cast(TFunc, wrapper)
 
+
+async def setup(bot):
+    """No-op setup so extension loader can import this helper module safely.
+
+    The project loads all .py files under `cogs/` as extensions; helper modules
+    that don't expose cogs can provide a harmless `setup` entry point to
+    avoid load-time errors. This is intentionally a no-op.
+    """
+    return None
+
