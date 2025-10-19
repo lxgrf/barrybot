@@ -35,8 +35,8 @@ class Activity(commands.Cog):
 
         active = [user.id for user in interaction.guild.members if any(role.name in config.include_role for role in user.roles) and not any(role.name in config.exclude_role for role in user.roles)]
 
-        one_month_ago = datetime.datetime.utcnow() - datetime.timedelta(days=config.inactivity_threshold)
-        fourteen_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=config.warning_threshold)
+        one_month_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=config.inactivity_threshold)
+        fourteen_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=config.warning_threshold)
         
         channel_histories_new = {}
         channel_histories_old = {}
@@ -104,7 +104,7 @@ class Activity(commands.Cog):
         if interaction.guild.id == 866376531995918346:  # Silverymoon server
             logger.info("Checking for level-ups in Silverymoon server")
             level_up_channel_ids = [866544281408897024, 866544082331369472, 881218238170665043] 
-            two_weeks_ago = datetime.datetime.utcnow() - datetime.timedelta(days=14)
+            two_weeks_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=14)
             
             try:
                 level_ups = []
@@ -159,7 +159,7 @@ class Activity(commands.Cog):
                 logger.error(f"Error checking level-ups: {str(e)}")
 
         description = ""
-        six_months_ago = datetime.datetime.utcnow() - datetime.timedelta(days=180)
+        six_months_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=180)
 
         for channel_id in config.monitored_channels[interaction.guild.id]:
             channel = self.bot.get_channel(int(channel_id))
@@ -169,7 +169,7 @@ class Activity(commands.Cog):
             messages = channel.history(limit=500, after=six_months_ago, before=one_month_ago)
             async for message in messages:
                 if message.author.id in inactive.keys():
-                    timeElapsed = datetime.datetime.utcnow() - message.created_at
+                    timeElapsed = datetime.datetime.now(datetime.timezone.utc) - message.created_at
                     if timeElapsed.days < inactive[message.author.id]:
                         inactive[message.author.id] = int(timeElapsed.days)
 
@@ -223,7 +223,7 @@ class Activity(commands.Cog):
                 # Channel has no messages; skip reporting
                 continue
             messageTime = message.created_at
-            timeElapsed = datetime.datetime.utcnow() - messageTime
+            timeElapsed = datetime.datetime.now(datetime.timezone.utc) - messageTime
             author = message.author
             status = ":green_circle:"
             if timeElapsed > datetime.timedelta(days=config.channeltimes[interaction.guild.id]["yellow"]):
