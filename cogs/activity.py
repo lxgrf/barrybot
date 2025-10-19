@@ -218,7 +218,7 @@ class Activity(commands.Cog):
             channel = self.bot.get_channel(int(channel_id))
             messages = channel.history(limit=1)
             try:
-                message = await messages.next()
+                message = await anext(messages)
             except StopAsyncIteration:
                 # Channel has no messages; skip reporting
                 continue
