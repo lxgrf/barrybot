@@ -127,6 +127,9 @@ class Listeners(commands.Cog):
                     logger.exception("Failed to parse an embed while checking Avrae triggers")
 
         text_lower = "\n".join(parts).lower()
+        if "this monster's full details" in text_lower:
+            return
+        
         if "go to marketplace" in text_lower:
             await message.reply(
                 "It looks like you're trying to use content that D&D Beyond doesn't want you to have. "
