@@ -25,6 +25,18 @@ async def on_ready():
     except Exception as e:
         logger.error(f'Failed to sync commands: {e}')
 
+    # Notify lxgrf on startup (once per process) — no fallback logic
+    if not getattr(bot, "_startup_dm_sent", False):
+        try:
+            target_user = await bot.fetch_user(661212031231459329)
+            await target_user.send("Barry is online and ready.")
+            logger.info("Sent startup DM to lxgrf (661212031231459329)")
+        except Exception as e:
+            logger.warning(f"Startup DM failed: {e}")
+        finally:
+            # Ensure we don't spam on reconnects
+            bot._startup_dm_sent = True
+
 # Load all cogs
 async def load_extensions():
     for filename in os.listdir('./cogs'):
