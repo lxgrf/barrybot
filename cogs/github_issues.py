@@ -121,9 +121,13 @@ class GitHubIssues(commands.Cog):
             if resp.status_code in (200, 201):
                 data = resp.json()
                 issue_url = data.get('html_url')
-                embed = Embed(title="Issue created", description=f"[{title}]({issue_url})")
-                # make confirmation visible to all
-                await interaction.followup.send(embed=embed)
+                issue_number = data.get('number')
+                title_text = f"Issue #{issue_number} created" if issue_number else "Issue created"
+                embed = Embed(title=title_text, description=f"[{title}]({issue_url})", url=issue_url)
+                if issue_number:
+                    embed.add_field(name="Issue #", value=str(issue_number), inline=True)
+                # make confirmation visible to all and include the raw URL so Discord can unfurl it
+                await interaction.followup.send(content=issue_url, embed=embed, ephemeral=False)
                 logger.info(f"Created GitHub issue {issue_url}")
             else:
                 logger.error(f"GitHub API returned {resp.status_code}: {resp.text}")
