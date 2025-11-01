@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Optional
 
 import discord
 from discord import Embed, File, app_commands
@@ -32,7 +33,7 @@ class Summaries(commands.Cog):
         interaction: discord.Interaction,
         startmessageid: str,
         endmessageid: str,
-        scenetitle: str | None = None,
+    scenetitle: Optional[str] = None,
     ) -> None:
         await interaction.response.defer(ephemeral=True)
 
