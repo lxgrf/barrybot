@@ -1,39 +1,36 @@
+"""Discord event listeners and automated responses for the Silverymoon guild."""
+
+from __future__ import annotations
+
+import logging
 import re
 import time
-import logging
 from collections import deque
-from discord.ext import commands
-import config
-from .listener_helpers import requires_not_ignored
 
+from discord.ext import commands
+
+import config
+from bot.extensions._helpers.listener_helpers import requires_not_ignored
 
 logger = logging.getLogger(__name__)
 
-class Listeners(commands.Cog):
-    """Discord event listeners and automated responses for the Silverymoon guild."""
 
+class Listeners(commands.Cog):
     SILVERYMOON_GUILD_ID = 866376531995918346
     DRAGONSPEAKER_ROLE_ID = 881993444380258377
     DRAGONSPEAKER_DEST_CHANNEL_ID = 1427377070664847441
     NYOOM_PATTERN = re.compile(r"ny+o{2,}m", re.IGNORECASE)
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        # Track characters that have been reminded about !sbb
-        # Format: {character_name: timestamp}
         self.sbb_reminders: dict[str, float] = {}
-        # Cooldown period in seconds (24 hours)
         self.sbb_reminder_cooldown = 24 * 60 * 60
-        # Track recent user messages per channel to associate with Avrae responses
-        # Format: {channel_id: deque([{'user_id', 'username', 'timestamp'}, ...])}
-        # We keep the last 10 messages per channel
         self.recent_user_messages: dict[int, deque] = {}
 
     # ------------------------------------------------------------------
     # Recent message tracking + ignore resolution helpers
     # ------------------------------------------------------------------
-    def _track_user_message(self, message):
-        """Remember the last few non-bot user messages for Avrae association."""
+    def _track_user_message(self, message) -> None:
         if message.author.bot:
             return
 
@@ -49,8 +46,7 @@ class Listeners(commands.Cog):
             }
         )
 
-    def _get_recent_user_in_channel(self, channel_id, max_age_seconds=10):
-        """Return the newest user entry for a channel within the time window."""
+    def _get_recent_user_in_channel(self, channel_id, max_age_seconds: int = 10):
         if channel_id not in self.recent_user_messages:
             return None
 
@@ -62,7 +58,6 @@ class Listeners(commands.Cog):
         return None
 
     def _resolve_triggering_user(self, message):
-        """Resolve which user should be checked against the ignore list."""
         if not getattr(message, "author", None):
             return None
 
@@ -74,8 +69,7 @@ class Listeners(commands.Cog):
             "username": message.author.name.lower() if getattr(message.author, "name", None) else None,
         }
 
-    def _is_user_ignored(self, user_id=None, username=None):
-        """Check whether a user appears in `config.IGNORE_LIST`."""
+    def _is_user_ignored(self, user_id=None, username=None) -> bool:
         ignore_list = getattr(config, "IGNORE_LIST", None)
         if not ignore_list:
             return False
@@ -95,7 +89,6 @@ class Listeners(commands.Cog):
     # ------------------------------------------------------------------
     @requires_not_ignored
     async def _handle_nyoom(self, message):
-        """Add the nyoom reaction + reply when the content matches."""
         if message.channel.id in config.nyoom_immunity:
             return
         if message.author.name in config.nyoom_user_immunity:
@@ -108,7 +101,6 @@ class Listeners(commands.Cog):
 
     @requires_not_ignored
     async def _handle_avrae_triggers(self, message):
-        """Inspect Avrae output and send helpful guidance messages."""
         parts = [message.content or ""]
         if message.embeds:
             for embed in message.embeds:
@@ -129,7 +121,7 @@ class Listeners(commands.Cog):
         text_lower = "\n".join(parts).lower()
         if "this monster's full details" in text_lower:
             return
-        
+
         if "go to marketplace" in text_lower:
             await message.reply(
                 "It looks like you're trying to use content that D&D Beyond doesn't want you to have. "
@@ -143,7 +135,6 @@ class Listeners(commands.Cog):
             )
 
     async def _handle_forward_dragonspeaker(self, message):
-        """Forward Dragonspeaker role mentions to the Dragonspeaker channel."""
         if message.channel.id == self.DRAGONSPEAKER_DEST_CHANNEL_ID:
             return
 
@@ -165,9 +156,7 @@ class Listeners(commands.Cog):
             return
 
         jump_url = getattr(message, "jump_url", "") or ""
-        prefix = (
-            f"Forwarded Dragonspeaker mention from <@{message.author.id}> in <#{message.channel.id}>:\n"
-        )
+        prefix = f"Forwarded Dragonspeaker mention from <@{message.author.id}> in <#{message.channel.id}>:\n"
         max_total = 1800
         reserved = len(prefix) + len("\nMessage: ") + len(jump_url) + 3
         content = message.content or ""
@@ -180,7 +169,6 @@ class Listeners(commands.Cog):
 
     @requires_not_ignored
     async def _check_spellbook_reminder(self, message):
-        """Check embed text for spellbook notes and nudge users toward `!sbb`."""
         spellbook_pattern = r"An italicized spell indicates that the spell is homebrew."
 
         footer_text = ""
@@ -222,8 +210,7 @@ class Listeners(commands.Cog):
     # Event listeners
     # ------------------------------------------------------------------
     @commands.Cog.listener()
-    async def on_message(self, message):
-        """Primary message listener for Silverymoon guild automation."""
+    async def on_message(self, message) -> None:
         if message.author == self.bot.user:
             return
 
@@ -256,8 +243,7 @@ class Listeners(commands.Cog):
             logger.exception("Error checking for Dragonspeaker mentions in on_message")
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-        """Forward ❌ reactions on this bot's messages in Silverymoon to the Dragonspeaker Ping channel."""
+    async def on_raw_reaction_add(self, payload) -> None:
         try:
             if payload.guild_id != self.SILVERYMOON_GUILD_ID:
                 return
@@ -323,5 +309,6 @@ class Listeners(commands.Cog):
         except Exception:
             logger.exception("Unexpected error in on_raw_reaction_add listener")
 
-async def setup(bot):
+
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Listeners(bot))

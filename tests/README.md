@@ -62,4 +62,4 @@ We aim to maintain good test coverage for:
 - Core business logic
 - Error handling
 
-Note: Tests for Discord bot commands/cogs are more complex and require significant mocking. The current test suite focuses on testable utility functions and configuration validation.
+Note: Tests for Discord slash-command extensions are more complex and require significant mocking. The current test suite focuses on testable utility functions and configuration validation.

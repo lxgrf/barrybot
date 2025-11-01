@@ -102,7 +102,7 @@ THREE APPROACHES TO COG TESTING:
    - Good value-to-effort ratio
    - Makes code more maintainable
    - Tests are fast and stable
-   - Gradually refactor existing cogs
+    - Gradually refactor existing extensions
 
 3. MANUAL TESTING IN TEST SERVER (Simplest)
    Complexity: ██░░░░░░░░ (2/10)
@@ -137,7 +137,7 @@ PHASE 1: IMMEDIATE (Current State) ✅
 - Manual testing checklist
 
 PHASE 2: GRADUAL IMPROVEMENT (Optional)
-- Extract business logic from cogs over time
+- Extract business logic from extensions over time
 - Add unit tests for extracted functions
 - Refactor as you touch code (boy scout rule)
 - Don't rewrite everything at once
@@ -163,7 +163,7 @@ Full Cog Testing:
 
 ROI Calculation:
 - Current: High value / Low effort = ★★★★★
-- Full cogs: Medium value / High effort = ★★☆☆☆
+- Full extensions: Medium value / High effort = ★★☆☆☆
 """
 
 # PRACTICAL EXAMPLES: What to Test Next
@@ -171,7 +171,7 @@ ROI Calculation:
 IF YOU WANT TO EXPAND TESTING, START HERE:
 
 1. Test Message Parsing Logic
-   Current location: Various places in cogs
+    Current location: Various places in extensions
    Refactor to: utils.py or new message_utils.py
    
    def parse_message_id(message_id_or_link):

@@ -16,30 +16,29 @@ A Discord bot designed to enhance and manage roleplaying servers, with a focus o
 
 ## Project Structure
 
-The bot is organised using a cog-based architecture, where different functionalities are grouped into separate modules. This makes the codebase easier to manage and extend. The main components are:
+The bot is organised as a Python package with a clear separation between runtime services and Discord extensions. The key pieces are:
 
--   **`main.py`**: The entry point of the bot. It loads the configuration, initialises the bot, and loads all the cogs.
--   **`config.py`**: A centralised file for all server-specific configurations, such as monitored channels, user roles, and activity thresholds.
--   **`cogs/`**: This directory contains the different cogs, each responsible for a specific set of commands and features:
-    -   `summaries.py`: Handles scene summarisation (`/tldr`) and exporting (`/export`).
-    -   `prompts.py`: Manages AI-powered scene and solo prompts.
-    -   `activity.py`: Tracks user and channel activity.
-    -   `listeners.py`: Contains event listeners, such as `on_ready`.
+-   **`main.py`**: The entry point that loads environment variables, builds the service container, and explicitly loads extensions from `bot/extensions`.
+-   **`config.py`**: Centralised server configuration covering monitored channels, role mappings, and thresholds.
+-   **`bot/`**: The main package housing production code.
+    -   `bot/extensions/`: Slash-command extensions and listeners (`activity.py`, `github_issues.py`, `listeners.py`, `prompts.py`, `summaries.py`).
+    -   `bot/services/`: Long-lived service objects such as the GitHub App client.
+    -   `bot/core/`: Settings loading and service container wiring.
 
 ## Commands
 
-Commands are grouped by their respective cogs.
+Commands are grouped by their respective extensions.
 
-### Summaries (`summaries.py`)
+### Summaries (`bot/extensions/summaries.py`)
 -   `/tldr <start_message_id> <end_message_id> [scene_title]`: Summarises a roleplay scene.
 -   `/export [start_message_id] [end_message_id]`: Exports a scene to a `.txt` file.
 
-### Prompts (`prompts.py`)
+### Prompts (`bot/extensions/prompts.py`)
 -   `/scene <character_one_details> <character_two_details> [request]`: Generates a scene prompt for two characters.
 -   `/solo <character_details> [request]`: Generates a scene prompt for a single character.
 -   `/help`: Displays help information for the AI prompt commands.
 
-### Activity (`activity.py`)
+### Activity (`bot/extensions/activity.py`)
 -   `/useractivity`: Displays a report of user posting activity in monitored roleplay channels (authorised users only).
 -   `/channelactivity`: Shows the last post time for all monitored channels and generates a ping message for stale channels (authorised users only).
 
