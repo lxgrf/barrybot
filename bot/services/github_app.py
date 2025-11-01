@@ -21,7 +21,7 @@ class GitHubAppError(RuntimeError):
     """Raised when GitHub App configuration or API calls fail."""
 
 
-@dataclass(slots=True)
+@dataclass
 class GitHubAppConfig:
     """Configuration options for authenticating as a GitHub App."""
 

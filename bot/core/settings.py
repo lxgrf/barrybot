@@ -13,7 +13,7 @@ class SettingsError(RuntimeError):
     """Raised when mandatory configuration is missing."""
 
 
-@dataclass(slots=True)
+@dataclass
 class Settings:
     """Minimal settings required to run the bot."""
 

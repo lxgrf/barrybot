@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from bot.services.github_app import GitHubAppClient
 
 
-@dataclass(slots=True)
+@dataclass
 class ServiceContainer:
     """Holds long-lived service instances injected into extensions."""
 
