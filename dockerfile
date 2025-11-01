@@ -8,14 +8,15 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 WORKDIR /app
 
 # Install system dependencies required by some Python crypto wheels (cryptography)
-# and install 'uv' once; cached as a separate layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         libssl-dev \
         libffi-dev \
         gcc \
-    && rm -rf /var/lib/apt/lists/* \
-    && --mount=type=cache,target=/root/.cache/pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install 'uv' once; cached as a separate layer (uses BuildKit cache mount)
+RUN --mount=type=cache,target=/root/.cache/pip \
     pip install uv
 
 # Copy only requirements for a stable cache key
