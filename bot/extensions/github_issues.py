@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 
 import discord
 from discord import Embed, app_commands
@@ -28,7 +28,7 @@ class GitHubIssues(commands.Cog):
         title="Title for the GitHub issue",
         body="Body/content for the GitHub issue",
         label="(optional) Label to apply (name)",
-        assignee="(optional) Assignee username (GitHub)",
+        assignees="(optional) Comma-separated GitHub usernames to assign",
     )
     async def issue(
         self,
@@ -36,15 +36,13 @@ class GitHubIssues(commands.Cog):
         title: str,
         body: str = "",
         label: Optional[str] = None,
-        assignee: Optional[str] = None,
+        assignees: Optional[str] = None,
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
-
         allowed_servers = getattr(config, "ai_enabled_servers", [])
         guild = getattr(interaction, "guild", None)
         guild_id = str(getattr(guild, "id", "")) if guild else None
         if not guild_id or guild_id not in allowed_servers:
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 embed=Embed(title="Unavailable", description="This command is not enabled in this server."),
                 ephemeral=True,
             )
@@ -52,7 +50,7 @@ class GitHubIssues(commands.Cog):
 
         repo = getattr(config, "GITHUB_ISSUE_REPO", "")
         if not repo:
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 embed=Embed(title="Error", description="GitHub issue repository is not configured."),
                 ephemeral=True,
             )
@@ -62,7 +60,7 @@ class GitHubIssues(commands.Cog):
         member = getattr(interaction, "user", None)
         roles = [role.name for role in getattr(member, "roles", [])]
         if "Dragonspeaker" not in roles:
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 embed=Embed(title="Permission denied", description="Only Dragonspeaker role may create issues."),
                 ephemeral=True,
             )
@@ -77,14 +75,14 @@ class GitHubIssues(commands.Cog):
                 labels = self.github.list_labels(repo)
             except GitHubAppError:
                 logger.exception("Failed to fetch labels for %s", repo)
-                await interaction.followup.send(
+                await interaction.response.send_message(
                     embed=Embed(title="Error", description="Failed to validate label."),
                     ephemeral=True,
                 )
                 return
 
             if label not in labels:
-                await interaction.followup.send(
+                await interaction.response.send_message(
                     embed=Embed(title="Invalid label", description=f"Label '{label}' not found in repository."),
                     ephemeral=True,
                 )
@@ -93,25 +91,36 @@ class GitHubIssues(commands.Cog):
             issue_labels = [label]
 
         issue_assignees: Optional[Iterable[str]] = None
-        if assignee:
+        requested_assignees: List[str] = []
+        if assignees:
+            requested_assignees = [name.strip() for name in assignees.split(",") if name.strip()]
             try:
-                assignees = self.github.list_assignees(repo)
+                available_assignees = self.github.list_assignees(repo)
             except GitHubAppError:
                 logger.exception("Failed to fetch assignees for %s", repo)
-                await interaction.followup.send(
+                await interaction.response.send_message(
                     embed=Embed(title="Error", description="Failed to validate assignee."),
                     ephemeral=True,
                 )
                 return
 
-            if assignee not in assignees:
-                await interaction.followup.send(
-                    embed=Embed(title="Invalid assignee", description=f"Assignee '{assignee}' not found in repository."),
+            missing_assignees = [name for name in requested_assignees if name not in available_assignees]
+            if missing_assignees:
+                await interaction.response.send_message(
+                    embed=Embed(
+                        title="Invalid assignee",
+                        description=(
+                            "The following assignee(s) were not found in the repository: "
+                            + ", ".join(missing_assignees)
+                        ),
+                    ),
                     ephemeral=True,
                 )
                 return
 
-            issue_assignees = [assignee]
+            issue_assignees = requested_assignees or None
+
+        await interaction.response.defer(thinking=True)
 
         try:
             issue = self.github.create_issue(repo, title, payload_body, labels=issue_labels, assignees=issue_assignees)
@@ -153,6 +162,45 @@ class GitHubIssues(commands.Cog):
 
         guild_name = getattr(guild, "name", None) or str(getattr(guild, "id", "unknown"))
         return f"\n\n---\nThis issue was created via Discord by {author_name} in server: {guild_name}."
+
+
+    @issue.autocomplete("assignees")
+    async def assignees_autocomplete(  # type: ignore[override]
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> List[app_commands.Choice[str]]:
+        repo = getattr(config, "GITHUB_ISSUE_REPO", "")
+        if not repo:
+            return []
+
+        try:
+            available_assignees = self.github.list_assignees(repo)
+        except GitHubAppError:
+            logger.exception("Failed to fetch assignees for autocomplete")
+            return []
+
+        parts = [part.strip() for part in current.split(",")]
+        base = [part for part in parts[:-1] if part]
+        partial = parts[-1] if parts else ""
+        partial_lower = partial.lower()
+
+        choices: List[app_commands.Choice[str]] = []
+        for login in available_assignees:
+            if partial_lower and partial_lower not in login.lower():
+                continue
+
+            combined = base + [login]
+            value = ", ".join(combined)
+            choices.append(app_commands.Choice(name=login, value=value))
+            if len(choices) >= 20:
+                break
+
+        if not choices and not partial:
+            for login in available_assignees[:20]:
+                choices.append(app_commands.Choice(name=login, value=login))
+
+        return choices
 
 
 async def setup(bot: commands.Bot) -> None:
