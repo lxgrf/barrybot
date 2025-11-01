@@ -57,11 +57,18 @@ class GitHubIssues(commands.Cog):
             return
 
         # Restrict to Dragonspeaker role holders
-        member = getattr(interaction, "user", None)
-        roles = [role.name for role in getattr(member, "roles", [])]
-        if "Dragonspeaker" not in roles:
+        # Permission check: allow only the user 'lxgrf', or members with
+        # the Dragonspeaker or Mod role on the Silverymoon server.
+        # NOTE: we match by guild name and role name because no IDs were supplied.
+        if not self._has_issue_permission(interaction):
             await interaction.response.send_message(
-                embed=Embed(title="Permission denied", description="Only Dragonspeaker role may create issues."),
+                embed=Embed(
+                    title="Permission denied",
+                    description=(
+                        "Only the user `lxgrf` or members with the Dragonspeaker or Mod role on the Silverymoon "
+                        "server may create issues."
+                    ),
+                ),
                 ephemeral=True,
             )
             return
@@ -164,6 +171,39 @@ class GitHubIssues(commands.Cog):
         return f"\n\n---\nThis issue was created via Discord by {author_name} in server: {guild_name}."
 
 
+    def _has_issue_permission(self, interaction: discord.Interaction) -> bool:
+        """
+        Check whether the interaction user is allowed to create issues.
+
+        Allowed when either:
+        - the user's name or display name equals 'lxgrf', OR
+        - the interaction is in a guild named 'Silverymoon' and the member has
+          a role named 'Dragonspeaker' or 'Mod'.
+
+        Assumptions: matching is done by role name and guild name because IDs
+        were not provided. If you prefer strict checks, replace name checks
+        with IDs.
+        """
+        try:
+            user = getattr(interaction, "user", None)
+            if user:
+                name = getattr(user, "name", None) or getattr(user, "display_name", None)
+                if name == "lxgrf":
+                    return True
+
+            guild = getattr(interaction, "guild", None)
+            if guild and getattr(guild, "name", "").lower() == "silverymoon":
+                # interaction.user is typically a Member in guild contexts
+                member = user if isinstance(user, discord.Member) else guild.get_member(getattr(user, "id", None))
+                if member:
+                    for role in getattr(member, "roles", []):
+                        if getattr(role, "name", "") in ("Dragonspeaker", "Mod"):
+                            return True
+            return False
+        except Exception:
+            return False
+
+
     @issue.autocomplete("assignees")
     async def assignees_autocomplete(  # type: ignore[override]
         self,
@@ -172,6 +212,10 @@ class GitHubIssues(commands.Cog):
     ) -> List[app_commands.Choice[str]]:
         repo = getattr(config, "GITHUB_ISSUE_REPO", "")
         if not repo:
+            return []
+
+        # Only provide autocomplete choices to users who may create issues.
+        if not self._has_issue_permission(interaction):
             return []
 
         try:
