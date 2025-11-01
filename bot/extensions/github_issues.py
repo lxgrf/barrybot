@@ -187,8 +187,11 @@ class GitHubIssues(commands.Cog):
         try:
             user = getattr(interaction, "user", None)
             if user:
-                name = getattr(user, "name", None) or getattr(user, "display_name", None)
-                if name == "lxgrf":
+                # Match only the account username (user.name). Do NOT fall back to
+                # display_name because that can be changed by the user and would be
+                # trivially spoofable.
+                username = getattr(user, "name", None)
+                if username == "lxgrf":
                     return True
 
             guild = getattr(interaction, "guild", None)
