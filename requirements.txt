@@ -35,3 +35,5 @@ tqdm==4.64.1
 typing_extensions==4.11.0
 urllib3==1.26.14
 yarl==1.8.2
+
+PyJWT[crypto]==2.8.0

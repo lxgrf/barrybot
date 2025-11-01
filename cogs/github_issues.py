@@ -39,9 +39,22 @@ class GitHubIssues(commands.Cog):
             await interaction.followup.send(embed=Embed(title="Error", description="GitHub issue repository is not configured."), ephemeral=True)
             return
 
-        token = os.getenv('GITHUB_TOKEN')
+        # Prefer GitHub App installation token if available; fall back to GITHUB_TOKEN
+        token = None
+        try:
+            # local import so module still works if helper isn't present or misconfigured
+            from .github_app import get_cached_installation_token
+            try:
+                token = get_cached_installation_token(repo)
+            except Exception:
+                logging.exception("Failed to obtain installation token via GitHub App")
+                await interaction.followup.send(embed=Embed(title="Error", description="Failed to obtain GitHub App token."), ephemeral=True)
+                return
+        except Exception:
+            token = os.getenv('GITHUB_TOKEN')
+
         if not token:
-            await interaction.followup.send(embed=Embed(title="Error", description="GITHUB_TOKEN environment variable not set."), ephemeral=True)
+            await interaction.followup.send(embed=Embed(title="Error", description="GITHUB_TOKEN environment variable not set and GitHub App not configured."), ephemeral=True)
             return
 
         # Validate role membership: only allow Dragonspeaker role to use this command
