@@ -201,7 +201,7 @@ class Listeners(commands.Cog):
         await message.reply(
             "💡 **Tip:** You can use `!sbb` as a more reliable alias to see your spellbook!\n\n"
             "It should be less confused by homebrew spells and Avrae's weird choices.\n\n"
-            "If you would rather not receive this reminder, react to this message with :x: ."
+            "-# You will not receive this tip again for 24 hours. If you would rather opt out of automated tips, react to this message with :x: ."
         )
         self.sbb_reminders[character_name] = current_time
         logger.info("Reminded %s of !sbb", character_name)
