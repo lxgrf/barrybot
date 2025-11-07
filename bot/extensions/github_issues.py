@@ -199,8 +199,9 @@ class GitHubIssues(commands.Cog):
                 # interaction.user is typically a Member in guild contexts
                 member = user if isinstance(user, discord.Member) else guild.get_member(getattr(user, "id", None))
                 if member:
+                    # Check for explicit role IDs (881993444380258377, 866507983458140201)
                     for role in getattr(member, "roles", []):
-                        if getattr(role, "name", "") in ("Dragonspeaker", "Mod"):
+                        if getattr(role, "id", None) in (881993444380258377, 866507983458140201):
                             return True
             return False
         except Exception:
