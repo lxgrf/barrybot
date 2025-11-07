@@ -101,6 +101,10 @@ class Listeners(commands.Cog):
             await message.reply("## 🏎️ nyooooom 🏎️")
 
     async def _handle_name_alert(self, message):
+        # Do not send alerts when the configured recipient authored the message.
+        if getattr(message.author, "id", None) == 661212031231459329:
+            return
+
         content_lower = (message.content or "").lower()
         for phrase in config.SILVERMOON_ALERT_PHRASES:
             if phrase.lower() in content_lower:
