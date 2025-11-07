@@ -8,6 +8,7 @@ import time
 from collections import deque
 
 from discord.ext import commands
+import discord
 
 import config
 from bot.extensions._helpers.listener_helpers import requires_not_ignored
@@ -98,6 +99,28 @@ class Listeners(commands.Cog):
         if self.NYOOM_PATTERN.search(content):
             await message.add_reaction("🏎️")
             await message.reply("## 🏎️ nyooooom 🏎️")
+
+    async def _handle_name_alert(self, message):
+        content_lower = (message.content or "").lower()
+        for phrase in config.SILVERMOON_ALERT_PHRASES:
+            if phrase.lower() in content_lower:
+                try:
+                    target_user = await self.bot.fetch_user(661212031231459329)
+                    alert_text = (
+                        f"Alert phrase detected in Silverymoon server by <@{message.author.id}> "
+                        f"in <#{message.channel.id}>:\n\n"
+                        f"Message: {message.content or '(no content)'}\n"
+                        f"Link: {getattr(message, 'jump_url', '') or ''}"
+                    )
+                    await target_user.send(alert_text)
+                    logger.info(
+                        "Sent Silverymoon alert DM for phrase '%s' from user %s",
+                        phrase,
+                        message.author.name,
+                    )
+                except Exception:
+                    logger.exception("Failed to send Silverymoon alert DM")
+                break
 
     @requires_not_ignored
     async def _handle_avrae_triggers(self, message):
@@ -241,6 +264,11 @@ class Listeners(commands.Cog):
             await self._handle_forward_dragonspeaker(message)
         except Exception:
             logger.exception("Error checking for Dragonspeaker mentions in on_message")
+
+        try:
+            await self._handle_name_alert(message)
+        except Exception:
+            logger.exception("Error handling Silverymoon name alert in on_message")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload) -> None:
