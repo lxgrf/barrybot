@@ -191,18 +191,18 @@ class GitHubIssues(commands.Cog):
                 # display_name because that can be changed by the user and would be
                 # trivially spoofable.
                 username = getattr(user, "name", None)
-                if username == "lxgrf":
+                if username in ["lxgrf", "aethelar"]:
                     return True
 
-            guild = getattr(interaction, "guild", None)
-            if guild and getattr(guild, "name", "").lower() == "silverymoon":
-                # interaction.user is typically a Member in guild contexts
-                member = user if isinstance(user, discord.Member) else guild.get_member(getattr(user, "id", None))
-                if member:
-                    # Check for explicit role IDs (881993444380258377, 866507983458140201)
-                    for role in getattr(member, "roles", []):
-                        if getattr(role, "id", None) in (881993444380258377, 866507983458140201):
-                            return True
+            # guild = getattr(interaction, "guild", None)
+            # if guild and getattr(guild, "name", "").lower() == "silverymoon":
+            #     # interaction.user is typically a Member in guild contexts
+            #     member = user if isinstance(user, discord.Member) else guild.get_member(getattr(user, "id", None))
+            #     if member:
+            #         # Check for explicit role IDs (881993444380258377, 866507983458140201)
+            #         for role in getattr(member, "roles", []):
+            #             if getattr(role, "id", None) in (881993444380258377, 866507983458140201):
+            #                 return True
             return False
         except Exception:
             return False
