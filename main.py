@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 EXTENSIONS = [
     "bot.extensions.activity",
+    "bot.extensions.contributions",
     "bot.extensions.github_issues",
     "bot.extensions.listeners",
     "bot.extensions.prompts",
