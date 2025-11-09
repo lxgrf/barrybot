@@ -268,11 +268,12 @@ class Listeners(commands.Cog):
             await self._handle_forward_dragonspeaker(message)
         except Exception:
             logger.exception("Error checking for Dragonspeaker mentions in on_message")
-
-        try:
-            await self._handle_name_alert(message)
-        except Exception:
-            logger.exception("Error handling Silverymoon name alert in on_message")
+            
+        if not message.author.bot:
+            try:
+                await self._handle_name_alert(message)
+            except Exception:
+                logger.exception("Error handling Silverymoon name alert in on_message")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload) -> None:
