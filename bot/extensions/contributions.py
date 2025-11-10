@@ -152,30 +152,35 @@ class Contributions(commands.Cog):
         try:
             async for message in channel.history(limit=message_limit, oldest_first=True):
                 scanned += 1
-                # Build a text blob including content and embed pieces to search for the phrase
-                texts: list[str] = []
-                if message.content:
-                    texts.append(message.content)
-                for emb in getattr(message, "embeds", []) or []:
-                    if getattr(emb, "title", None):
-                        texts.append(emb.title)
-                    if getattr(emb, "description", None):
-                        texts.append(emb.description)
-                    for fld in getattr(emb, "fields", []) or []:
-                        if getattr(fld, "name", None):
-                            texts.append(str(fld.name))
-                        if getattr(fld, "value", None):
-                            texts.append(str(fld.value))
-                    if getattr(emb, "footer", None) and getattr(emb.footer, "text", None):
-                        texts.append(emb.footer.text)
+                # Build parts using the same approach as listeners._handle_avrae_triggers
+                parts = [message.content or ""]
+                if message.embeds:
+                    for embed in message.embeds:
+                        try:
+                            if getattr(embed, "title", None):
+                                parts.append(embed.title)
+                            if getattr(embed, "description", None):
+                                parts.append(embed.description)
+                            if getattr(embed, "footer", None) and getattr(embed.footer, "text", None):
+                                parts.append(embed.footer.text)
+                            if getattr(embed, "fields", None):
+                                for field in embed.fields:
+                                    parts.append(field.name or "")
+                                    parts.append(field.value or "")
+                        except Exception:
+                            logger.exception("Failed to parse an embed while checking contributions")
 
-                text_blob = "\n".join(texts)
+                text_blob = "\n".join(parts)
                 if not text_blob:
                     continue
 
-                points_match = self.POINTS_REGEX.search(text_blob)
+                points_match = self.POINTS_REGEX.search(text_blob) or getattr(self, 'POINTS_REGEX_FALLBACK', None) and self.POINTS_REGEX_FALLBACK.search(text_blob)
                 if not points_match:
-                    continue
+                    # try lowercase fallback for odd formatting
+                    text_lower = text_blob.lower()
+                    points_match = self.POINTS_REGEX.search(text_lower) or getattr(self, 'POINTS_REGEX_FALLBACK', None) and self.POINTS_REGEX_FALLBACK.search(text_lower)
+                    if not points_match:
+                        continue
 
                 try:
                     points = int(points_match.group(1).replace(",", ""))
