@@ -101,30 +101,52 @@ class Listeners(commands.Cog):
             await message.reply("## 🏎️ nyooooom 🏎️")
 
     async def _handle_name_alert(self, message):
-        # Do not send alerts when the configured recipient authored the message.
-        if getattr(message.author, "id", None) == 661212031231459329:
-            return
-
         content_lower = (message.content or "").lower()
-        for phrase in config.SILVERMOON_ALERT_PHRASES:
-            if phrase.lower() in content_lower:
-                try:
-                    target_user = await self.bot.fetch_user(661212031231459329)
-                    alert_text = (
-                        f"Alert phrase detected in Silverymoon server by <@{message.author.id}> "
-                        f"in <#{message.channel.id}>:\n\n"
-                        f"Message: {message.content or '(no content)'}\n"
-                        f"Link: {getattr(message, 'jump_url', '') or ''}"
-                    )
-                    await target_user.send(alert_text)
-                    logger.info(
-                        "Sent Silverymoon alert DM for phrase '%s' from user %s",
-                        phrase,
-                        message.author.name,
-                    )
-                except Exception:
-                    logger.exception("Failed to send Silverymoon alert DM")
-                break
+        author_id = getattr(message.author, "id", None)
+
+        # Alerts for lxgrf (661212031231459329): notify if anyone other than lxgrf mentions one of the phrases
+        if author_id != 661212031231459329:
+            for phrase in ['Sarran', 'Fabian', 'Alex']:
+                if phrase.lower() in content_lower:
+                    try:
+                        target_user = await self.bot.fetch_user(661212031231459329)
+                        alert_text = (
+                            f"You were mentioned in Silverymoon by <@{message.author.id}> "
+                            f"in <#{message.channel.id}>:\n\n"
+                            f"Message: {message.content or '(no content)'}\n"
+                            f"Link: {getattr(message, 'jump_url', '') or ''}"
+                        )
+                        await target_user.send(alert_text)
+                        logger.info(
+                            "Sent Silverymoon alert DM for phrase '%s' from user %s",
+                            phrase,
+                            message.author.name,
+                        )
+                    except Exception:
+                        logger.exception("Failed to send Silverymoon alert DM")
+                    break
+
+        # Alerts for aethelar (702837629363683408): notify if anyone other than aethelar mentions one of the phrases
+        if author_id != 702837629363683408:
+            for phrase in ['Mimi', 'Elias', 'Paige']:
+                if phrase.lower() in content_lower:
+                    try:
+                        target_user = await self.bot.fetch_user(702837629363683408)
+                        alert_text = (
+                            f"You were mentioned in Silverymoon by <@{message.author.id}> "
+                            f"in <#{message.channel.id}>:\n\n"
+                            f"Message: {message.content or '(no content)'}\n"
+                            f"Link: {getattr(message, 'jump_url', '') or ''}"
+                        )
+                        await target_user.send(alert_text)
+                        logger.info(
+                            "Sent Silverymoon alert DM to aethelar for phrase '%s' from user %s",
+                            phrase,
+                            message.author.name,
+                        )
+                    except Exception:
+                        logger.exception("Failed to send Silverymoon alert DM to aethelar")
+                    break
 
     @requires_not_ignored
     async def _handle_avrae_triggers(self, message):
