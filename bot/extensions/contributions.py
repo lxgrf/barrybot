@@ -246,32 +246,82 @@ class Contributions(commands.Cog):
                     continue
                 non_empty_blobs += 1
 
-                points_match = self.POINTS_REGEX.search(text_blob) or getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(text_blob)
-                if not points_match:
-                    # try lowercase fallback for odd formatting
-                    text_lower = text_blob.lower()
-                    points_match = self.POINTS_REGEX.search(text_lower) or getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(text_lower)
+                # Prefer per-embed scanning: many Avrae outputs put the phrase in the embed description
+                matched_here = False
+                for emb in getattr(message, "embeds", []) or []:
+                    emb_desc = getattr(emb, "description", None)
+                    if not emb_desc:
+                        continue
+                    # normalize tiny invisible characters
+                    emb_desc_norm = emb_desc.replace("\u200b", "").strip()
+                    points_match = self.POINTS_REGEX.search(emb_desc_norm) or (getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(emb_desc_norm))
+                    if not points_match:
+                        # lowercase fallback
+                        points_match = self.POINTS_REGEX.search(emb_desc_norm.lower()) or (getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(emb_desc_norm.lower()))
+                    if not points_match:
+                        continue
+
+                    # got points in this embed description
+                    regex_matched += 1
+                    try:
+                        points = int(points_match.group(1).replace(",", ""))
+                    except Exception:
+                        continue
+
+                    # key comes from the first word of the embed title (preferred)
+                    emb_title = getattr(emb, "title", None) or ""
+                    # normalize title similarly
+                    emb_title_norm = emb_title.replace("\u200b", "").strip()
+                    first_word = None
+                    if emb_title_norm:
+                        # take first token and strip punctuation
+                        tok = emb_title_norm.splitlines()[0].strip()
+                        tok = tok.lstrip("*-•–—> #")
+                        tok = tok.split()[0] if tok.split() else ""
+                        first_word = tok.strip("`*_~.,:;!?—-()[]{}\u200b") or None
+
+                    if not first_word:
+                        # fallback to previous message-level heuristic
+                        first_word = _extract_first_word_key(message)
+
+                    if not first_word:
+                        matched_without_key += 1
+                        if len(sample_matched_no_key) < 5:
+                            sample_matched_no_key.append(emb_desc_norm[:300])
+                        # continue scanning other embeds in the message
+                        continue
+
+                    per_key[first_word] += points
+                    grand_total += points
+                    matched_here = True
+                    # continue scanning other embeds (do not break) to capture multiple contributions in one message
+
+                if not matched_here:
+                    # fallback: scan the assembled text blob (legacy behaviour)
+                    points_match = self.POINTS_REGEX.search(text_blob) or (getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(text_blob))
+                    if not points_match:
+                        text_lower = text_blob.lower()
+                        points_match = self.POINTS_REGEX.search(text_lower) or (getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(text_lower))
                     if not points_match:
                         if len(sample_unmatched_blobs) < 5:
                             sample_unmatched_blobs.append(text_blob[:300])
                         continue
 
-                regex_matched += 1
-                try:
-                    points = int(points_match.group(1).replace(",", ""))
-                except Exception:
-                    continue
+                    regex_matched += 1
+                    try:
+                        points = int(points_match.group(1).replace(",", ""))
+                    except Exception:
+                        continue
 
-                # First word key, now preferring embed title with sensible fallbacks
-                first_word = _extract_first_word_key(message)
-                if not first_word:
-                    matched_without_key += 1
-                    if len(sample_matched_no_key) < 5:
-                        sample_matched_no_key.append(text_blob[:300])
-                    continue
+                    first_word = _extract_first_word_key(message)
+                    if not first_word:
+                        matched_without_key += 1
+                        if len(sample_matched_no_key) < 5:
+                            sample_matched_no_key.append(text_blob[:300])
+                        continue
 
-                per_key[first_word] += points
-                grand_total += points
+                    per_key[first_word] += points
+                    grand_total += points
         except Exception:
             logger.exception("Error while scanning channel history for contributions")
             await interaction.followup.send(
