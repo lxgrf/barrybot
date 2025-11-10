@@ -91,6 +91,12 @@ class Contributions(commands.Cog):
         per_key: Dict[str, int] = defaultdict(int)
         grand_total = 0
         scanned = 0
+        # diagnostics
+        non_empty_blobs = 0
+        regex_matched = 0
+        matched_without_key = 0
+        sample_matched_no_key: list[str] = []
+        sample_unmatched_blobs: list[str] = []
 
         def _extract_first_word_key(msg: discord.Message) -> str | None:
             """Return the first word key for aggregation.
@@ -152,6 +158,7 @@ class Contributions(commands.Cog):
         try:
             async for message in channel.history(limit=message_limit, oldest_first=True):
                 scanned += 1
+
                 # Build parts using the same approach as listeners._handle_avrae_triggers
                 parts = [message.content or ""]
                 if message.embeds:
@@ -173,15 +180,19 @@ class Contributions(commands.Cog):
                 text_blob = "\n".join(parts)
                 if not text_blob:
                     continue
+                non_empty_blobs += 1
 
-                points_match = self.POINTS_REGEX.search(text_blob) or getattr(self, 'POINTS_REGEX_FALLBACK', None) and self.POINTS_REGEX_FALLBACK.search(text_blob)
+                points_match = self.POINTS_REGEX.search(text_blob) or getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(text_blob)
                 if not points_match:
                     # try lowercase fallback for odd formatting
                     text_lower = text_blob.lower()
-                    points_match = self.POINTS_REGEX.search(text_lower) or getattr(self, 'POINTS_REGEX_FALLBACK', None) and self.POINTS_REGEX_FALLBACK.search(text_lower)
+                    points_match = self.POINTS_REGEX.search(text_lower) or getattr(self, "POINTS_REGEX_FALLBACK", None) and self.POINTS_REGEX_FALLBACK.search(text_lower)
                     if not points_match:
+                        if len(sample_unmatched_blobs) < 5:
+                            sample_unmatched_blobs.append(text_blob[:300])
                         continue
 
+                regex_matched += 1
                 try:
                     points = int(points_match.group(1).replace(",", ""))
                 except Exception:
@@ -190,6 +201,9 @@ class Contributions(commands.Cog):
                 # First word key, now preferring embed title with sensible fallbacks
                 first_word = _extract_first_word_key(message)
                 if not first_word:
+                    matched_without_key += 1
+                    if len(sample_matched_no_key) < 5:
+                        sample_matched_no_key.append(text_blob[:300])
                     continue
 
                 per_key[first_word] += points
@@ -204,12 +218,22 @@ class Contributions(commands.Cog):
             return
 
         if not per_key:
-            await interaction.followup.send(
-                embed=Embed(
-                    title="Contribution Points",
-                    description="No matching contribution point messages were found in the channel history.",
-                )
+            # Provide diagnostic information to help debug why no keys were extracted
+            diag = Embed(title="Contribution Points — diagnostics")
+            diag.description = (
+                f"Scanned {scanned} messages (requested {message_limit}).\n"
+                f"Non-empty message blobs: {non_empty_blobs}\n"
+                f"Regex matches: {regex_matched}\n"
+                f"Matches with no key extracted: {matched_without_key}\n"
             )
+
+            if sample_matched_no_key:
+                diag.add_field(name="Examples (matched points but no key)", value="\n---\n".join(sample_matched_no_key), inline=False)
+            if sample_unmatched_blobs:
+                diag.add_field(name="Examples (no regex match)", value="\n---\n".join(sample_unmatched_blobs), inline=False)
+
+            diag.set_footer(text="If you share one of the example blobs I can refine the regex/key extraction.")
+            await interaction.followup.send(embed=diag)
             return
 
         # Sort by total descending, then key
