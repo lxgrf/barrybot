@@ -156,7 +156,8 @@ class Contributions(commands.Cog):
             return None
 
         try:
-            async for message in channel.history(limit=message_limit, oldest_first=True):
+            # Fetch the most recent messages (last N). oldest_first=False ensures we get newest -> oldest
+            async for message in channel.history(limit=message_limit, oldest_first=False):
                 scanned += 1
 
                 # Build parts using the same approach as listeners._handle_avrae_triggers
