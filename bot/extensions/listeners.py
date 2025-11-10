@@ -106,7 +106,7 @@ class Listeners(commands.Cog):
 
         # Alerts for lxgrf (661212031231459329): notify if anyone other than lxgrf mentions one of the phrases
         if author_id != 661212031231459329:
-            for phrase in ['Sarran', 'Fabian', 'Alex']:
+            for phrase in ['Sarran', 'Fabian', 'Alex', 'Cerys', 'Afton']:
                 if phrase.lower() in content_lower:
                     try:
                         target_user = await self.bot.fetch_user(661212031231459329)

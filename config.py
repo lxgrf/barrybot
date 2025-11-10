@@ -134,15 +134,3 @@ POSTS_FILE = "/data/random_posts.json"
 # GitHub issues integration
 GITHUB_ISSUE_REPO = "scions-of-silverymoon/avrae"  # e.g. "owner/repo" - leave empty to disable
 
-# Silverymoon alert settings
-# A short list of phrases (case-insensitive substrings) which, when used in a
-# message on the Silverymoon server, will trigger a DM to the configured
-# recipient. Edit as needed.
-SILVERMOON_ALERT_PHRASES = [
-    "Sarran","Cerys","Fabian","Alex"
-]
-
-# Username to DM when a phrase is detected. Prefer the account username
-# (not display name). Change to a user ID for more robust matching if you
-# have it available.
-ALERT_RECIPIENT_USERNAME = "lxgrf"
