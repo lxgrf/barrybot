@@ -87,6 +87,55 @@ class Contributions(commands.Cog):
         if message_limit > 10000:
             message_limit = 10000
 
+        # Quick echo mode: if user asked for 1 message, return a labeled breakdown
+        # of the most recent message's parts (content, embed title/description/fields/footer/author)
+        if message_limit == 1:
+            try:
+                last_msg = None
+                async for m in channel.history(limit=1, oldest_first=False):
+                    last_msg = m
+                    break
+
+                if not last_msg:
+                    await interaction.followup.send(embed=Embed(title="Last message", description="No messages found in the channel."))
+                    return
+
+                def _t(s: str | None, lim: int = 1000) -> str:
+                    if s is None:
+                        return "(none)"
+                    s = str(s)
+                    return s if len(s) <= lim else s[: max(0, lim - 3)] + "..."
+
+                echo = Embed(title="Last message breakdown")
+                echo.add_field(name="Message ID", value=str(last_msg.id), inline=False)
+                echo.add_field(name="Author", value=f"{last_msg.author} ({last_msg.author.id})", inline=False)
+                echo.add_field(name="Message content", value=_t(last_msg.content or "(empty)"), inline=False)
+
+                if last_msg.embeds:
+                    for idx, emb in enumerate(last_msg.embeds):
+                        base = f"Embed {idx}"
+                        echo.add_field(name=f"{base} - title", value=_t(getattr(emb, "title", None) or "(none)"), inline=False)
+                        echo.add_field(name=f"{base} - description", value=_t(getattr(emb, "description", None) or "(none)"), inline=False)
+                        # fields combined
+                        f_lines = []
+                        for f in getattr(emb, "fields", []) or []:
+                            n = getattr(f, "name", "")
+                            v = getattr(f, "value", "")
+                            f_lines.append(f"**{n}**: {v}")
+                        if f_lines:
+                            echo.add_field(name=f"{base} - fields", value=_t("\n".join(f_lines), 1000), inline=False)
+                        if getattr(emb, "footer", None) and getattr(emb.footer, "text", None):
+                            echo.add_field(name=f"{base} - footer", value=_t(emb.footer.text), inline=False)
+                        if getattr(emb, "author", None) and getattr(emb.author, "name", None):
+                            echo.add_field(name=f"{base} - author", value=_t(emb.author.name), inline=False)
+
+                await interaction.followup.send(embed=echo)
+                return
+            except Exception:
+                logger.exception("Failed to fetch or echo last message")
+                await interaction.followup.send(embed=Embed(title="Error", description="Failed to fetch or echo last message."))
+                return
+
         # Aggregate totals
         per_key: Dict[str, int] = defaultdict(int)
         grand_total = 0
