@@ -88,13 +88,24 @@ class Contributions(commands.Cog):
             message_limit = 10000
 
         # Quick echo mode: if user asked for 1 message, return a labeled breakdown
-        # of the most recent message's parts (content, embed title/description/fields/footer/author)
+        # of the most recent non-bot message's parts (content, embed title/description/fields/footer/author).
+        # The bot's own deferred response can appear as the newest message, so skip bot messages.
         if message_limit == 1:
             try:
                 last_msg = None
-                async for m in channel.history(limit=1, oldest_first=False):
+                # scan a small window for the latest non-bot message (lookback 50)
+                async for m in channel.history(limit=50, oldest_first=False):
+                    # Only skip messages sent by this bot itself; allow other bots (like Avrae) to be processed
+                    if getattr(self.bot, "user", None) and m.author.id == self.bot.user.id:
+                        continue
                     last_msg = m
                     break
+
+                # fallback: if none found in lookback, use the very last message (even if bot)
+                if not last_msg:
+                    async for m in channel.history(limit=1, oldest_first=False):
+                        last_msg = m
+                        break
 
                 if not last_msg:
                     await interaction.followup.send(embed=Embed(title="Last message", description="No messages found in the channel."))
@@ -207,6 +218,9 @@ class Contributions(commands.Cog):
         try:
             # Fetch the most recent messages (last N). oldest_first=False ensures we get newest -> oldest
             async for message in channel.history(limit=message_limit, oldest_first=False):
+                # Skip messages sent by this bot only; we want to process Avrae and other bot outputs.
+                if getattr(self.bot, "user", None) and message.author.id == self.bot.user.id:
+                    continue
                 scanned += 1
 
                 # Build parts using the same approach as listeners._handle_avrae_triggers
