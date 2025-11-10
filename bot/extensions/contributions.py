@@ -227,10 +227,19 @@ class Contributions(commands.Cog):
                 f"Matches with no key extracted: {matched_without_key}\n"
             )
 
+            def _truncate_for_embed(s: str, limit: int = 1000) -> str:
+                if s is None:
+                    return ""
+                if len(s) <= limit:
+                    return s
+                return s[: max(0, limit - 3)] + "..."
+
             if sample_matched_no_key:
-                diag.add_field(name="Examples (matched points but no key)", value="\n---\n".join(sample_matched_no_key), inline=False)
+                joined = "\n---\n".join(sample_matched_no_key)
+                diag.add_field(name="Examples (matched points but no key)", value=_truncate_for_embed(joined, 1000), inline=False)
             if sample_unmatched_blobs:
-                diag.add_field(name="Examples (no regex match)", value="\n---\n".join(sample_unmatched_blobs), inline=False)
+                joined = "\n---\n".join(sample_unmatched_blobs)
+                diag.add_field(name="Examples (no regex match)", value=_truncate_for_embed(joined, 1000), inline=False)
 
             diag.set_footer(text="If you share one of the example blobs I can refine the regex/key extraction.")
             await interaction.followup.send(embed=diag)
