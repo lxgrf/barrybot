@@ -32,7 +32,8 @@ class Contributions(commands.Cog):
         name="contributions",
         description="Aggregate contribution points by first-word key from the Silverymoon downtimes channel.",
     )
-    async def contributions(self, interaction: discord.Interaction) -> None:
+    @app_commands.describe(message_limit="Number of recent messages to scan (default 500, max 10000).")
+    async def contributions(self, interaction: discord.Interaction, message_limit: int = 500) -> None:
         """Scan the configured channel and total contribution points per first-word key.
 
         Key extraction: first whitespace-delimited word of the message content body.
@@ -74,13 +75,19 @@ class Contributions(commands.Cog):
             )
             return
 
+        # Sanitise limit
+        if message_limit <= 0:
+            message_limit = 1
+        if message_limit > 10000:
+            message_limit = 10000
+
         # Aggregate totals
         per_key: Dict[str, int] = defaultdict(int)
         grand_total = 0
         scanned = 0
 
         try:
-            async for message in channel.history(limit=None, oldest_first=True):
+            async for message in channel.history(limit=message_limit, oldest_first=True):
                 scanned += 1
                 content = message.content or ""
                 if not content:
@@ -129,7 +136,10 @@ class Contributions(commands.Cog):
         sorted_totals: Tuple[str, int] = sorted(per_key.items(), key=lambda kv: (-kv[1], kv[0].lower()))  # type: ignore[assignment]
 
         # Build output, chunk if needed to stay under Discord message limits
-        header = f"Grand total: {grand_total} points across {len(per_key)} keys (scanned {scanned} messages).\n\n"
+        header = (
+            f"Grand total: {grand_total} points across {len(per_key)} keys (scanned {scanned} messages / requested {message_limit})."\
+            "\n\n"
+        )
         lines = [f"- {k}: {v}" for k, v in sorted_totals]  # bullet list keeps it compact
         description = header
 
