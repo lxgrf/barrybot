@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from collections import defaultdict
-from typing import Dict, Tuple
+from typing import Dict
 
 import discord
 from discord import Embed, app_commands
@@ -212,7 +212,7 @@ class Contributions(commands.Cog):
 
         # Build output, chunk if needed to stay under Discord message limits
         header = (
-            f"Grand total: {grand_total} points across {len(per_key)} keys (scanned {scanned} messages / requested {message_limit})."\
+            f"Grand total: {grand_total} points across {len(per_key)} keys (scanned {scanned} messages / requested {message_limit})."
             "\n\n"
         )
         lines = [f"- {k}: {v}" for k, v in sorted_totals]  # bullet list keeps it compact
@@ -230,9 +230,9 @@ class Contributions(commands.Cog):
             chunks.append(current)
 
         # Send first chunk as an embed, subsequent chunks as continued embeds
-    title = "Contribution Points Summary"
-    embed = Embed(title=title, description=chunks[0])
-    await interaction.followup.send(embed=embed)
+        title = "Contribution Points Summary"
+        embed = Embed(title=title, description=chunks[0])
+        await interaction.followup.send(embed=embed)
 
         for idx in range(1, len(chunks)):
             cont_embed = Embed(title=f"Contribution Points Summary (cont. {idx})", description=chunks[idx])
