@@ -41,8 +41,9 @@ class Contributions(commands.Cog):
     async def contributions(self, interaction: discord.Interaction, message_limit: int = 500) -> None:
         """Scan the configured channel and total contribution points per first-word key.
 
-        Key extraction: first whitespace-delimited word of the message content body.
-        Only the message body is scanned (no embed titles, etc.).
+        Key extraction: prefer the first word of the first embed title; fall back to message content,
+        embed description, first field value/name, or footer text.
+        Contribution phrase is searched across message content and embed fields.
         """
         await interaction.response.defer()
 
@@ -91,7 +92,7 @@ class Contributions(commands.Cog):
         grand_total = 0
         scanned = 0
 
-    def _extract_first_word_key(msg: discord.Message) -> str | None:
+        def _extract_first_word_key(msg: discord.Message) -> str | None:
             """Return the first word key for aggregation.
 
             Priority order:
@@ -207,7 +208,7 @@ class Contributions(commands.Cog):
             return
 
         # Sort by total descending, then key
-        sorted_totals: Tuple[str, int] = sorted(per_key.items(), key=lambda kv: (-kv[1], kv[0].lower()))  # type: ignore[assignment]
+        sorted_totals: list[tuple[str, int]] = sorted(per_key.items(), key=lambda kv: (-kv[1], kv[0].lower()))
 
         # Build output, chunk if needed to stay under Discord message limits
         header = (
@@ -229,9 +230,9 @@ class Contributions(commands.Cog):
             chunks.append(current)
 
         # Send first chunk as an embed, subsequent chunks as continued embeds
-        title = "Contribution Points Summary"
-        embed = Embed(title=title, description=chunks[0])
-        await interaction.followup.send(embed=embed)
+    title = "Contribution Points Summary"
+    embed = Embed(title=title, description=chunks[0])
+    await interaction.followup.send(embed=embed)
 
         for idx in range(1, len(chunks)):
             cont_embed = Embed(title=f"Contribution Points Summary (cont. {idx})", description=chunks[idx])
