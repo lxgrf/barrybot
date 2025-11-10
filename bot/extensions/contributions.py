@@ -22,8 +22,13 @@ class Contributions(commands.Cog):
 
     SILVERYMOON_GUILD_ID = 866376531995918346
     DOWNTIMES_CHANNEL_ID = 881218238170665043
-    # Matches: "That's 24 contribution points" or "That's only 24 contribution points"
-    POINTS_REGEX = re.compile(r"That\'s\s+(?:only\s+)?(\d+)\s+contribution\s+points", re.IGNORECASE)
+    # Matches: "That's 24 contribution points" or "That's only 24 contribution points" allowing optional markdown
+    # around the number (e.g. **24**, *24*), and optional commas in numbers.
+    # Accept both straight and curly apostrophes (’ or ').
+    POINTS_REGEX = re.compile(
+        r"That[’']s\s+(?:only\s+)?\**\*?_?([0-9]{1,3}(?:,[0-9]{3})*)_?\*?\**\s+contribution\s+points",
+        re.IGNORECASE,
+    )
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -86,29 +91,98 @@ class Contributions(commands.Cog):
         grand_total = 0
         scanned = 0
 
+    def _extract_first_word_key(msg: discord.Message) -> str | None:
+            """Return the first word key for aggregation.
+
+            Priority order:
+            1) First embed title's first word (common for Avrae outputs)
+            2) Message content first word
+            3) Embed description first word
+            4) First embed field value, then field name
+            5) Embed footer text first word
+            """
+            candidates: list[str] = []
+            # 1) Prefer embed title
+            for emb in getattr(msg, "embeds", []) or []:
+                if getattr(emb, "title", None):
+                    candidates.append(emb.title)
+                    break  # only need the first embed title
+                # Also consider author name if present (less common but may hold key)
+                if getattr(emb, "author", None) and getattr(emb.author, "name", None):
+                    candidates.append(emb.author.name)
+            # 2) Message content
+            if msg.content:
+                candidates.append(msg.content)
+            for emb in getattr(msg, "embeds", []) or []:
+                if getattr(emb, "description", None):
+                    candidates.append(emb.description)
+                # Prefer first field's value then name
+                fields = list(getattr(emb, "fields", []) or [])
+                if fields:
+                    first_field = fields[0]
+                    if getattr(first_field, "value", None):
+                        candidates.append(str(first_field.value))
+                    if getattr(first_field, "name", None):
+                        candidates.append(str(first_field.name))
+                if getattr(emb, "footer", None) and getattr(emb.footer, "text", None):
+                    candidates.append(emb.footer.text)
+
+            def _first_word(text: str) -> str | None:
+                # Use first non-empty line
+                for line in text.splitlines():
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    # Remove common markdown bullets/prefixes
+                    stripped = stripped.lstrip("*-•–—> #")
+                    # Split on whitespace
+                    tok = stripped.split()[0]
+                    # Strip punctuation/markdown wrappers
+                    tok = tok.strip("`*_~.,:;!?—-()[]{}\u200b")
+                    return tok or None
+                return None
+
+            for c in candidates:
+                w = _first_word(c)
+                if w:
+                    return w
+            return None
+
         try:
             async for message in channel.history(limit=message_limit, oldest_first=True):
                 scanned += 1
-                content = message.content or ""
-                if not content:
+                # Build a text blob including content and embed pieces to search for the phrase
+                texts: list[str] = []
+                if message.content:
+                    texts.append(message.content)
+                for emb in getattr(message, "embeds", []) or []:
+                    if getattr(emb, "title", None):
+                        texts.append(emb.title)
+                    if getattr(emb, "description", None):
+                        texts.append(emb.description)
+                    for fld in getattr(emb, "fields", []) or []:
+                        if getattr(fld, "name", None):
+                            texts.append(str(fld.name))
+                        if getattr(fld, "value", None):
+                            texts.append(str(fld.value))
+                    if getattr(emb, "footer", None) and getattr(emb.footer, "text", None):
+                        texts.append(emb.footer.text)
+
+                text_blob = "\n".join(texts)
+                if not text_blob:
                     continue
 
-                points_match = self.POINTS_REGEX.search(content)
+                points_match = self.POINTS_REGEX.search(text_blob)
                 if not points_match:
                     continue
 
                 try:
-                    points = int(points_match.group(1))
+                    points = int(points_match.group(1).replace(",", ""))
                 except Exception:
                     continue
 
-                # First word of the message content is the key
-                stripped = content.lstrip()
-                if not stripped:
-                    continue
-                first_word = stripped.split()[0]
-                # Normalise trivial trailing punctuation on first word
-                first_word = first_word.strip(".,:;!?—-*")
+                # First word key, now preferring embed title with sensible fallbacks
+                first_word = _extract_first_word_key(message)
                 if not first_word:
                     continue
 
