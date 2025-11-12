@@ -104,6 +104,10 @@ class Listeners(commands.Cog):
         content_lower = (message.content or "").lower()
         author_id = getattr(message.author, "id", None)
 
+        # don't respond to messages in Mod Chat
+        if message.channel.id == 1077665811981926520:
+            return
+
         # Alerts for lxgrf (661212031231459329): notify if anyone other than lxgrf mentions one of the phrases
         if author_id != 661212031231459329:
             for phrase in ['Sarran', 'Fabian', 'Alex', 'Cerys', 'Afton']:
