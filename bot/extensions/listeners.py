@@ -108,18 +108,39 @@ class Listeners(commands.Cog):
         if message.channel.id == 1077665811981926520:
             return
 
+        # Helper to build a DM that stays under Discord's 2000-char limit
+        def _build_alert_text(recipient_label: str = "You were mentioned in Silverymoon") -> str:
+            prefix = (
+                f"{recipient_label} by <@{message.author.id}> "
+                f"in <#{message.channel.id}>:\n\n"
+            )
+            jump_url = getattr(message, "jump_url", "") or ""
+            content = message.content or "(no content)"
+            # Reserve space for static parts and link
+            max_total = 2000
+            reserved = len(prefix) + len("Message: ") + len("\nLink: ") + len(jump_url)
+            allowed = max_total - reserved
+            if allowed <= 0:
+                content_display = "(content omitted - too long)"
+            else:
+                if len(content) > allowed:
+                    # keep a few chars for ellipsis if there's room
+                    if allowed > 3:
+                        content_display = content[: allowed - 3] + "..."
+                    else:
+                        content_display = content[:allowed]
+                else:
+                    content_display = content
+
+            return f"{prefix}Message: {content_display}\nLink: {jump_url}"
+
         # Alerts for lxgrf (661212031231459329): notify if anyone other than lxgrf mentions one of the phrases
         if author_id != 661212031231459329:
             for phrase in ['Sarran', 'Fabian', 'Alex', 'Cerys', 'Afton']:
                 if phrase.lower() in content_lower:
                     try:
                         target_user = await self.bot.fetch_user(661212031231459329)
-                        alert_text = (
-                            f"You were mentioned in Silverymoon by <@{message.author.id}> "
-                            f"in <#{message.channel.id}>:\n\n"
-                            f"Message: {message.content or '(no content)'}\n"
-                            f"Link: {getattr(message, 'jump_url', '') or ''}"
-                        )
+                        alert_text = _build_alert_text()
                         await target_user.send(alert_text)
                         logger.info(
                             "Sent Silverymoon alert DM for phrase '%s' from user %s",
@@ -136,12 +157,7 @@ class Listeners(commands.Cog):
                 if phrase.lower() in content_lower:
                     try:
                         target_user = await self.bot.fetch_user(702837629363683408)
-                        alert_text = (
-                            f"You were mentioned in Silverymoon by <@{message.author.id}> "
-                            f"in <#{message.channel.id}>:\n\n"
-                            f"Message: {message.content or '(no content)'}\n"
-                            f"Link: {getattr(message, 'jump_url', '') or ''}"
-                        )
+                        alert_text = _build_alert_text()
                         await target_user.send(alert_text)
                         logger.info(
                             "Sent Silverymoon alert DM to aethelar for phrase '%s' from user %s",

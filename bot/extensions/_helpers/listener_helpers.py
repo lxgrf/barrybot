@@ -32,11 +32,6 @@ def requires_not_ignored(func: TFunc) -> TFunc:
                 username=triggering_user.get("username"),
             )
             if is_ignored:
-                logger.info(
-                    "Suppressed %s for ignored user %s",
-                    func.__name__,
-                    triggering_user.get("username") or triggering_user.get("user_id"),
-                )
                 return None
         except Exception:
             logger.exception("Error while checking ignore list in requires_not_ignored decorator")
