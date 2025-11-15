@@ -18,7 +18,7 @@ class Utility(commands.Cog):
 
     @app_commands.command(name="utility", description="In-place server utility command for lxgrf.")
     async def utility(self, interaction: discord.Interaction) -> None:
-        """Send a DM to lxgrf containing a list of channels and their jump URLs.
+        """Send a DM to lxgrf containing a list of text channels and their URLs.
 
         Only lxgrf can invoke this. If invoked by others, an ephemeral denial is returned.
         """
@@ -38,44 +38,37 @@ class Utility(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         guild = interaction.guild
-        # Collect channels: text + voice + categories + threads for completeness
-        channels: Sequence[discord.abc.GuildChannel] = guild.channels  # includes categories, text, voice, stage, forum
+        # Collect only text channels; skip categories, threads, voice, stage, forum, etc.
+        text_channels: Sequence[discord.TextChannel] = guild.text_channels
 
+        # Produce one Markdown line per channel: [Name](url)
         lines: list[str] = []
-        for ch in channels:
+        for ch in text_channels:
             try:
-                # Build a URL if possible (text-based channels have message jump URL format)
-                base_url = f"https://discord.com/channels/{guild.id}/{ch.id}"
-                type_name = type(ch).__name__.replace("Channel", "")
-                name_display = getattr(ch, "name", str(ch.id))
-                lines.append(f"[{type_name}] #{name_display} -> {base_url}")
+                channel_url = f"https://discord.com/channels/{guild.id}/{ch.id}"
+                lines.append(f"[{ch.name}]({channel_url})")
             except Exception:
-                logger.exception("Failed building line for channel %s", getattr(ch, "id", None))
+                logger.exception("Failed building line for text channel %s", getattr(ch, "id", None))
 
-        # Threads (not in guild.channels list until active); include active threads in text channels
-        try:
-            for ch in channels:
-                if isinstance(ch, discord.TextChannel):
-                    for thread in ch.threads:
-                        thread_url = f"https://discord.com/channels/{guild.id}/{thread.id}"
-                        lines.append(f"[Thread] #{thread.name} -> {thread_url}")
-        except Exception:
-            logger.exception("Failed collecting threads")
+        # Build DM messages comprised solely of code blocks, chunked under 2000 chars each.
+        # Each message is: ```md\n<lines>\n```
+        def as_block(content: str) -> str:
+            return f"```md\n{content}\n```"
 
-        content_header = f"Channel inventory for guild: {guild.name} (ID: {guild.id})\nTotal entries: {len(lines)}\n\n"
-        remaining = lines
-
-        # Discord DM content must be <= 2000 chars; chunk responsibly.
         chunks: list[str] = []
-        current = content_header
-        for line in remaining:
-            # +1 for newline
-            if len(current) + len(line) + 1 > 1900:  # leave some headroom
-                chunks.append(current)
-                current = ""
-            current += ("\n" if current else "") + line
-        if current:
-            chunks.append(current)
+        current_lines: list[str] = []
+        for line in lines:
+            tentative = "\n".join(current_lines + [line])
+            if len(as_block(tentative)) > 2000:
+                # flush current
+                if current_lines:
+                    chunks.append(as_block("\n".join(current_lines)))
+                # start new chunk with this line
+                current_lines = [line]
+            else:
+                current_lines.append(line)
+        if current_lines:
+            chunks.append(as_block("\n".join(current_lines)))
 
         try:
             target_user = await self.bot.fetch_user(LXGRF_USER_ID)
@@ -87,15 +80,15 @@ class Utility(commands.Cog):
         sent = 0
         for idx, chunk in enumerate(chunks):
             try:
-                header_prefix = f"[Part {idx+1}/{len(chunks)}]\n" if len(chunks) > 1 else ""
-                await target_user.send(header_prefix + chunk)
+                # Send each chunk as its own code block message; no headers to keep content clean.
+                await target_user.send(chunk)
                 sent += 1
             except Exception:
                 logger.exception("Failed sending utility DM part %s", idx + 1)
 
         await interaction.followup.send(
             embed=Embed(
-                title="Utility Report", description=f"Sent {sent} DM part(s) to <@{LXGRF_USER_ID}> with {len(lines)} entries."
+                title="Utility Report", description=f"Sent {sent} DM part(s) to <@{LXGRF_USER_ID}> with {len(lines)} text channel entries."
             ),
             ephemeral=True,
         )
