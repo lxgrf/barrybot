@@ -154,19 +154,26 @@ class Listeners(commands.Cog):
         # Alerts for aethelar (702837629363683408): notify if anyone other than aethelar mentions one of the phrases
         if author_id != 702837629363683408:
             for phrase in ['Mimi', 'Elias', 'Paige']:
-                if phrase.lower() in content_lower:
-                    try:
-                        target_user = await self.bot.fetch_user(702837629363683408)
-                        alert_text = _build_alert_text()
-                        await target_user.send(alert_text)
-                        logger.info(
-                            "Sent Silverymoon alert DM to aethelar for phrase '%s' from user %s",
-                            phrase,
-                            message.author.name,
-                        )
-                    except Exception:
-                        logger.exception("Failed to send Silverymoon alert DM to aethelar")
-                    break
+                # Special case: 'Mimi' must be a standalone word, not a substring like 'mimir'
+                if phrase.lower() == 'mimi':
+                    if not re.search(r"\bmimi\b", content_lower):
+                        continue
+                else:
+                    if phrase.lower() not in content_lower:
+                        continue
+
+                try:
+                    target_user = await self.bot.fetch_user(702837629363683408)
+                    alert_text = _build_alert_text()
+                    await target_user.send(alert_text)
+                    logger.info(
+                        "Sent Silverymoon alert DM to aethelar for phrase '%s' from user %s",
+                        phrase,
+                        message.author.name,
+                    )
+                except Exception:
+                    logger.exception("Failed to send Silverymoon alert DM to aethelar")
+                break
 
     @requires_not_ignored
     async def _handle_avrae_triggers(self, message):
