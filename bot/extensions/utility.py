@@ -16,7 +16,7 @@ class Utility(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="utility", description="List all channels in this server (DM to lxgrf).")
+    @app_commands.command(name="utility", description="In-place server utility command for lxgrf.")
     async def utility(self, interaction: discord.Interaction) -> None:
         """Send a DM to lxgrf containing a list of channels and their jump URLs.
 
