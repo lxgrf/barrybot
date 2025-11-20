@@ -153,10 +153,11 @@ class Listeners(commands.Cog):
 
         # Alerts for aethelar (702837629363683408): notify if anyone other than aethelar mentions one of the phrases
         if author_id != 702837629363683408:
-            for phrase in ['Mimi', 'Elias', 'Paige']:
+            for phrase in ['Mimi', 'Elias', 'Paige', 'Meems','Mims']:
                 # Special case: 'Mimi' must be a standalone word, not a substring like 'mimir'
-                if phrase.lower() == 'mimi':
-                    if not re.search(r"\bmimi\b", content_lower):
+                # So must 'Mims' 
+                if phrase.lower() == 'mimi' or phrase.lower() == 'mims':
+                    if not re.search(rf"\b{phrase.lower()}\b", content_lower):
                         continue
                 else:
                     if phrase.lower() not in content_lower:
