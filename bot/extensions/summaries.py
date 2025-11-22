@@ -231,7 +231,25 @@ class Summaries(commands.Cog):
             for message in scene_messages:
                 handle.write(f"{message.author.name}\n-----\n {message.content}\n===============\n")
 
-        await interaction.followup.send(file=File(filename), ephemeral=True)
+        try:
+            await interaction.user.send(file=File(filename))
+            await interaction.followup.send(
+                embed=Embed(title="Export", description="Scene exported and sent to your DMs!"),
+                ephemeral=True,
+            )
+        except discord.Forbidden:
+            # Fall back to sending in channel if DMs are disabled
+            await interaction.followup.send(
+                content="Could not DM you the export (check your privacy settings). Sending here instead:",
+                file=File(filename),
+                ephemeral=True,
+            )
+        except Exception:
+            logger.exception("Failed to send export file to user %s", interaction.user.id)
+            await interaction.followup.send(
+                embed=Embed(title="Export Failed", description="An error occurred while sending the file."),
+                ephemeral=True,
+            )
 
     # ------------------------------------------------------------------
     # Helpers
