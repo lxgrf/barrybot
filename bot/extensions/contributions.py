@@ -108,7 +108,10 @@ class Contributions(commands.Cog):
                         break
 
                 if not last_msg:
-                    await interaction.followup.send(embed=Embed(title="Last message", description="No messages found in the channel."))
+                    await interaction.followup.send(
+                        embed=Embed(title="Last message", description="No messages found in the channel."),
+                        ephemeral=True,
+                    )
                     return
 
                 def _t(s: str | None, lim: int = 1000) -> str:
@@ -140,11 +143,32 @@ class Contributions(commands.Cog):
                         if getattr(emb, "author", None) and getattr(emb.author, "name", None):
                             echo.add_field(name=f"{base} - author", value=_t(emb.author.name), inline=False)
 
-                await interaction.followup.send(embed=echo)
+                # Send echo to DM, fall back to channel if DMs are disabled
+                try:
+                    await interaction.user.send(embed=echo)
+                    await interaction.followup.send(
+                        embed=Embed(title="Last Message", description="Breakdown sent to your DMs!"),
+                        ephemeral=True,
+                    )
+                except discord.Forbidden:
+                    await interaction.followup.send(
+                        content="Could not DM you the breakdown (check your privacy settings). Sending here instead:",
+                        embed=echo,
+                        ephemeral=True,
+                    )
+                except Exception:
+                    logger.exception("Failed to send echo to user %s", interaction.user.id)
+                    await interaction.followup.send(
+                        embed=Embed(title="Error", description="Failed to send message breakdown."),
+                        ephemeral=True,
+                    )
                 return
             except Exception:
                 logger.exception("Failed to fetch or echo last message")
-                await interaction.followup.send(embed=Embed(title="Error", description="Failed to fetch or echo last message."))
+                await interaction.followup.send(
+                    embed=Embed(title="Error", description="Failed to fetch or echo last message."),
+                    ephemeral=True,
+                )
                 return
 
         # Aggregate totals
@@ -356,7 +380,26 @@ class Contributions(commands.Cog):
                 diag.add_field(name="Examples (no regex match)", value=_truncate_for_embed(joined, 1000), inline=False)
 
             diag.set_footer(text="If you share one of the example blobs I can refine the regex/key extraction.")
-            await interaction.followup.send(embed=diag)
+            
+            # Send diagnostics to DM, fall back to channel if DMs are disabled
+            try:
+                await interaction.user.send(embed=diag)
+                await interaction.followup.send(
+                    embed=Embed(title="Contribution Points", description="Diagnostics sent to your DMs!"),
+                    ephemeral=True,
+                )
+            except discord.Forbidden:
+                await interaction.followup.send(
+                    content="Could not DM you the diagnostics (check your privacy settings). Sending here instead:",
+                    embed=diag,
+                    ephemeral=True,
+                )
+            except Exception:
+                logger.exception("Failed to send diagnostics to user %s", interaction.user.id)
+                await interaction.followup.send(
+                    embed=Embed(title="Error", description="Failed to send diagnostics."),
+                    ephemeral=True,
+                )
             return
 
         # Sort by total descending, then key
@@ -384,11 +427,33 @@ class Contributions(commands.Cog):
         # Send first chunk as an embed, subsequent chunks as continued embeds
         title = "Contribution Points Summary"
         embed = Embed(title=title, description=chunks[0])
-        await interaction.followup.send(embed=embed)
-
-        for idx in range(1, len(chunks)):
-            cont_embed = Embed(title=f"Contribution Points Summary (cont. {idx})", description=chunks[idx])
-            await interaction.followup.send(embed=cont_embed)
+        
+        try:
+            # Send the results to the user's DMs
+            await interaction.user.send(embed=embed)
+            for idx in range(1, len(chunks)):
+                cont_embed = Embed(title=f"Contribution Points Summary (cont. {idx})", description=chunks[idx])
+                await interaction.user.send(embed=cont_embed)
+            
+            await interaction.followup.send(
+                embed=Embed(title="Contribution Points", description="Summary sent to your DMs!"),
+                ephemeral=True,
+            )
+        except discord.Forbidden:
+            # Fall back to sending in channel if DMs are disabled
+            await interaction.followup.send(
+                content="Could not DM you the summary (check your privacy settings). Sending here instead:",
+                embed=embed,
+            )
+            for idx in range(1, len(chunks)):
+                cont_embed = Embed(title=f"Contribution Points Summary (cont. {idx})", description=chunks[idx])
+                await interaction.followup.send(embed=cont_embed)
+        except Exception:
+            logger.exception("Failed to send contribution summary to user %s", interaction.user.id)
+            await interaction.followup.send(
+                embed=Embed(title="Error", description="Failed to send contribution summary."),
+                ephemeral=True,
+            )
 
 
 async def setup(bot: commands.Bot) -> None:
