@@ -108,7 +108,7 @@ guild_ids = [866376531995918346]  # Silverymoon server ID
 # Users to ignore for automated replies
 # Can contain user IDs (integers) or usernames (strings, lowercase)
 # Examples: [123456789, "username1", "username2"]
-IGNORE_LIST = ["rosiemittens","aethelar"]
+IGNORE_LIST = ["rosiemittens","aethelar","altiar448"]
 
 # AI capability enabling
 ai_enabled_servers = [
