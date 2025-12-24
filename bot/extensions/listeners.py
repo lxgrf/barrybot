@@ -104,6 +104,14 @@ class Listeners(commands.Cog):
         content_lower = (message.content or "").lower()
         author_id = getattr(message.author, "id", None)
 
+        def _phrase_in_content(phrase: str) -> bool:
+            """Match whole-word phrases to avoid false positives (e.g., 'Alex' vs 'Alexis')."""
+            if not phrase:
+                return False
+
+            pattern = rf"\b{re.escape(phrase.lower())}\b"
+            return re.search(pattern, content_lower) is not None
+
         # don't respond to messages in Mod Chat
         if message.channel.id == 1077665811981926520:
             return
@@ -137,7 +145,7 @@ class Listeners(commands.Cog):
         # Alerts for lxgrf (661212031231459329): notify if anyone other than lxgrf mentions one of the phrases
         if author_id != 661212031231459329:
             for phrase in ['Sarran', 'Fabian', 'Alex', 'Cerys', 'Afton']:
-                if phrase.lower() in content_lower:
+                if _phrase_in_content(phrase):
                     try:
                         target_user = await self.bot.fetch_user(661212031231459329)
                         alert_text = _build_alert_text()
@@ -154,14 +162,9 @@ class Listeners(commands.Cog):
         # Alerts for aethelar (702837629363683408): notify if anyone other than aethelar mentions one of the phrases
         if author_id != 702837629363683408:
             for phrase in ['Mimi', 'Elias', 'Paige', 'Meems','Mims']:
-                # Special case: 'Mimi' must be a standalone word, not a substring like 'mimir'
-                # So must 'Mims' 
-                if phrase.lower() == 'mimi' or phrase.lower() == 'mims':
-                    if not re.search(rf"\b{phrase.lower()}\b", content_lower):
-                        continue
-                else:
-                    if phrase.lower() not in content_lower:
-                        continue
+                # Use the same whole-word matcher to avoid substrings like 'mimir' or 'Mimsy'
+                if not _phrase_in_content(phrase):
+                    continue
 
                 try:
                     target_user = await self.bot.fetch_user(702837629363683408)
