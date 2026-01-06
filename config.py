@@ -1,12 +1,12 @@
 guilds ={
-    "1010366904612954203":"a fantasy city", # Test Server
+    "1114617197931790376":"a fantasy city", # Test Server
     "866376531995918346":"the city of Silverymoon, in Faerûn",
     "1001193835835183174":"the city of Caddocia, in a homebrew fantasy world",
     "1197643287423627264":"The city of Bellegorn, in a homebrew fantasy world",
          }
 
 ai_guilds={
-    "1010366904612954203":"a fantasy city", # Test Server
+    "1114617197931790376":"a fantasy city", # Test Server
     "866376531995918346":"the city of Silverymoon, in Faerûn",
     "1001193835835183174":"the city of Caddocia, in a homebrew fantasy world",
 }
