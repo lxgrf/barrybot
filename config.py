@@ -114,7 +114,7 @@ IGNORE_LIST = ["rosiemittens","aethelar","altiar448"]
 ai_enabled_servers = [
     "866376531995918346",  # Silverymoon
     "1001193835835183174", # Caddocia
-    "1114617197931790376"  # Test Server
+    "1114617197931790376",  # Test Server
     # Add your new server ID here
 ]
 
