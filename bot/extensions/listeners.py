@@ -113,7 +113,7 @@ class Listeners(commands.Cog):
             return re.search(pattern, content_lower) is not None
 
         # don't respond to messages in Mod Chat
-        if message.channel.id == 1077665811981926520:
+        if message.channel.id in [1077665811981926520,1460404365327335534]:  
             return
 
         # Helper to build a DM that stays under Discord's 2000-char limit
