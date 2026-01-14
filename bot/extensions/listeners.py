@@ -112,8 +112,8 @@ class Listeners(commands.Cog):
             pattern = rf"\b{re.escape(phrase.lower())}\b"
             return re.search(pattern, content_lower) is not None
 
-        # don't respond to messages in Mod Chat
-        if message.channel.id in [1077665811981926520,1460404365327335534]:  
+        # don't respond to messages in Mod Chat Category
+        if getattr(message.channel, "category_id", None) == 866400862854184972:
             return
 
         # Helper to build a DM that stays under Discord's 2000-char limit
