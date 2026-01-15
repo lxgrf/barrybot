@@ -112,8 +112,9 @@ class Activity(commands.Cog):
                 for channel_id in level_up_channel_ids:
                     level_up_channel = self.bot.get_channel(channel_id)
                     if level_up_channel:
-                        message_limit = 2000 if channel_id == 881218238170665043 else 200
-                        async for message in level_up_channel.history(limit=message_limit, after=two_weeks_ago):
+                        async for message in level_up_channel.history(limit=None):
+                            if message.created_at < two_weeks_ago:
+                                break
                             texts = []
                             if message.content:
                                 texts.append(message.content)
@@ -148,7 +149,11 @@ class Activity(commands.Cog):
                                     level_ups.append((character_name, level))
 
                 if level_ups:
-                    unique_level_ups = sorted(list(set(level_ups)), key=lambda item: item[1], reverse=True)
+                    highest_levels = {}
+                    for name, level in level_ups:
+                        if name not in highest_levels or level > highest_levels[name]:
+                            highest_levels[name] = level
+                    unique_level_ups = sorted(highest_levels.items(), key=lambda item: item[1], reverse=True)
                     level_up_description = "Level-ups in the last two weeks:\n" + "\n".join(
                         [f"- {name} reached level {level}!" for name, level in unique_level_ups]
                     )
