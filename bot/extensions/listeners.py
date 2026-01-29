@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Listeners(commands.Cog):
     SILVERYMOON_GUILD_ID = 866376531995918346
     DRAGONSPEAKER_ROLE_ID = 881993444380258377
-    DRAGONSPEAKER_DEST_CHANNEL_ID = 1427377070664847441
+    DRAGONSPEAKER_DEST_CHANNEL_ID = 1466414670972846284
     NYOOM_PATTERN = re.compile(r"ny+o{2,}m", re.IGNORECASE)
 
     def __init__(self, bot: commands.Bot) -> None:
@@ -27,6 +27,24 @@ class Listeners(commands.Cog):
         self.sbb_reminders: dict[str, float] = {}
         self.sbb_reminder_cooldown = 24 * 60 * 60
         self.recent_user_messages: dict[int, deque] = {}
+
+    # ------------------------------------------------------------------
+    # Helper for posting to DragonSpeaker destination
+    # ------------------------------------------------------------------
+    async def _post_to_dragonspeaker_channel(self, channel, content: str, title: str = "DragonSpeaker Notification"):
+        """
+        Posts content to the DragonSpeaker destination channel.
+        Handles checking if the channel is a ForumChannel or TextChannel.
+        """
+        if isinstance(channel, discord.ForumChannel):
+            # Check for "Unassigned" tag
+            unassigned_tag = discord.utils.get(channel.available_tags, name="Unassigned")
+            applied_tags = [unassigned_tag] if unassigned_tag else []
+
+            await channel.create_thread(name=title, content=content, applied_tags=applied_tags)
+        else:
+            # Fallback for TextChannel
+            await channel.send(content)
 
     # ------------------------------------------------------------------
     # Recent message tracking + ignore resolution helpers
@@ -245,7 +263,12 @@ class Listeners(commands.Cog):
             content = content[:allowed] + "... (truncated)" if allowed > 0 else "(content omitted - too long)"
 
         forward_text = f"{prefix}{content}\nMessage: {jump_url}"
-        await dest_channel.send(forward_text)
+        forward_text = f"{prefix}{content}\nMessage: {jump_url}"
+        await self._post_to_dragonspeaker_channel(
+            dest_channel, 
+            forward_text, 
+            title=f"Mention by {message.author.name} in #{getattr(message.channel, 'name', 'unknown-channel')}"
+        )
 
     @requires_not_ignored
     async def _check_spellbook_reminder(self, message):
@@ -390,7 +413,12 @@ class Listeners(commands.Cog):
                 f"Message: {msg_link}"
             )
 
-            await dest_channel.send(notify_text)
+            title = f"Reaction by {reactor_username or 'Unknown'} in #{getattr(message.channel, 'name', 'unknown-channel')}"
+            await self._post_to_dragonspeaker_channel(
+                dest_channel, 
+                notify_text, 
+                title=title
+            )
 
         except Exception:
             logger.exception("Unexpected error in on_raw_reaction_add listener")
