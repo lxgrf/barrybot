@@ -37,9 +37,15 @@ class Listeners(commands.Cog):
         Handles checking if the channel is a ForumChannel or TextChannel.
         """
         if isinstance(channel, discord.ForumChannel):
-            # Check for "Unassigned" tag
+            # Check for "Unassigned" and "Open" tags
             unassigned_tag = discord.utils.get(channel.available_tags, name="Unassigned")
-            applied_tags = [unassigned_tag] if unassigned_tag else []
+            open_tag = discord.utils.get(channel.available_tags, name="Open")
+            
+            applied_tags = []
+            if unassigned_tag:
+                applied_tags.append(unassigned_tag)
+            if open_tag:
+                applied_tags.append(open_tag)
 
             await channel.create_thread(name=title, content=content, applied_tags=applied_tags)
         else:
