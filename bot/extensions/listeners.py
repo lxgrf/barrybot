@@ -234,8 +234,9 @@ class Listeners(commands.Cog):
             )
         if "it looks like you don't have your discord account connected to your d&d beyond account" in text_lower:
             await message.reply(
-                "It looks like you don't have access to SRD content. Please try using `!aa` instead of `!a`, and if stuck "
-                "please ping a `@dragonspeaker` for assistance.\n\nReact with :x: to this message if you'd like to opt out of automated replies."
+                "It looks like you don't have access to SRD content. This is free content, you just need to connect your D&D Beyond account to your Discord account.\n\n"
+                "We go to some lengths to ensure the premium content is available, but for the free content we do ask that you meet us in the middle.\n"
+                "React with :x: to this message if you'd like to opt out of automated replies."
             )
 
     async def _handle_forward_dragonspeaker(self, message):
