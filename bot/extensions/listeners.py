@@ -185,7 +185,15 @@ class Listeners(commands.Cog):
 
         # Alerts for aethelar (702837629363683408): notify if anyone other than aethelar mentions one of the phrases
         if author_id != 702837629363683408:
-            for phrase in ['Mimi', 'Elias', 'Paige', 'Meems','Mims','Neopets']:
+            for phrase in [
+                'Mimi', 
+                'Elias', 
+                'Paige', 
+                'Meems',
+                'Mims',
+                'Neopets',
+                'Eilas',
+            ]:
                 # Use the same whole-word matcher to avoid substrings like 'mimir' or 'Mimsy'
                 if not _phrase_in_content(phrase):
                     continue
