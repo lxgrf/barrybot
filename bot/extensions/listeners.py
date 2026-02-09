@@ -168,7 +168,17 @@ class Listeners(commands.Cog):
 
         # Alerts for lxgrf (661212031231459329): notify if anyone other than lxgrf mentions one of the phrases
         if author_id != 661212031231459329:
-            for phrase in ['Sarran', 'Fabian', 'Alex', 'Cerys', 'Afton']:
+            for phrase in [
+                'Sarran',
+                'Fabian',
+                'Alex',
+                'Cerys',
+                'Afton',
+                'LX',
+                'Vyla',
+                'Cora',
+                'Lyra',
+            ]:
                 if _phrase_in_content(phrase):
                     try:
                         target_user = await self.bot.fetch_user(661212031231459329)
@@ -186,9 +196,9 @@ class Listeners(commands.Cog):
         # Alerts for aethelar (702837629363683408): notify if anyone other than aethelar mentions one of the phrases
         if author_id != 702837629363683408:
             for phrase in [
-                'Mimi', 
-                'Elias', 
-                'Paige', 
+                'Mimi',
+                'Elias',
+                'Paige',
                 'Meems',
                 'Mims',
                 'Neopets',
