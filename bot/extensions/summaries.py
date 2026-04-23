@@ -182,20 +182,48 @@ class Summaries(commands.Cog):
         else:
             try:
                 channel_id = interaction.channel.id
-                if "discord" in startmessageid:
-                    channel_id = int(startmessageid.split("/")[-2])
-                    startmessageid = int(startmessageid.split("/")[-1])
-                if "discord" in endmessageid:
-                    if channel_id != int(endmessageid.split("/")[-2]):
-                        await interaction.followup.send(
-                            embed=Embed(
-                                title="Export",
-                                description="Start and end messages need to both be in the same channel, for obvious reasons.",
-                            ),
-                            ephemeral=True,
-                        )
-                        return
-                    endmessageid = int(endmessageid.split("/")[-1])
+                start_message_id = None
+                end_message_id = None
+
+                startmessageid = startmessageid.strip()
+                endmessageid = endmessageid.strip()
+
+                if startmessageid:
+                    if "discord" in startmessageid:
+                        channel_id = int(startmessageid.split("/")[-2])
+                        start_message_id = int(startmessageid.split("/")[-1])
+                    else:
+                        start_message_id = int(startmessageid)
+
+                if endmessageid:
+                    if "discord" in endmessageid:
+                        if channel_id != int(endmessageid.split("/")[-2]):
+                            await interaction.followup.send(
+                                embed=Embed(
+                                    title="Export",
+                                    description="Start and end messages need to both be in the same channel, for obvious reasons.",
+                                ),
+                                ephemeral=True,
+                            )
+                            return
+                        end_message_id = int(endmessageid.split("/")[-1])
+                    else:
+                        end_message_id = int(endmessageid)
+
+                if start_message_id is None and end_message_id is not None:
+                    start_message_id = end_message_id
+                if end_message_id is None and start_message_id is not None:
+                    end_message_id = start_message_id
+
+                if start_message_id is None or end_message_id is None:
+                    await interaction.followup.send(
+                        embed=Embed(
+                            title="Export",
+                            description="Message IDs/Links should be numbers or URLs.",
+                        ),
+                        ephemeral=True,
+                    )
+                    return
 
                 channel = await self.bot.fetch_channel(channel_id)
             except (discord.NotFound, discord.Forbidden):
@@ -214,8 +242,8 @@ class Summaries(commands.Cog):
             messages = [message async for message in channel.history(limit=10000)]
             messages = messages[::-1]
 
-            start_index = next((i for i, message in enumerate(messages) if message.id == int(startmessageid)), -1)
-            end_index = next((i for i, message in enumerate(messages) if message.id == int(endmessageid)), -1)
+            start_index = next((i for i, message in enumerate(messages) if message.id == start_message_id), -1)
+            end_index = next((i for i, message in enumerate(messages) if message.id == end_message_id), -1)
 
             if start_index == -1 or end_index == -1:
                 await interaction.followup.send(
