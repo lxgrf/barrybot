@@ -42,6 +42,10 @@ Commands are grouped by their respective extensions.
 -   `/useractivity`: Displays a report of user posting activity in monitored roleplay channels (authorised users only).
 -   `/channelactivity`: Shows the last post time for all monitored channels and generates a ping message for stale channels (authorised users only).
 
+### Utility (`bot/extensions/utility.py`)
+-   `/utility`: Sends lxgrf a DM containing a server text-channel list.
+-   `/senddm <user> <message>`: Sends a custom DM to the selected member of the current server (lxgrf only).
+
 ## Technologies Used
 
 -   [discord.py](https://github.com/Rapptz/discord.py) (v2.x with native slash commands)

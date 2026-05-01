@@ -93,5 +93,65 @@ class Utility(commands.Cog):
             ephemeral=True,
         )
 
+    @app_commands.command(name="senddm", description="Send a custom DM to a server member (lxgrf only).")
+    @app_commands.describe(
+        user="Server member to DM",
+        message="Message content to send",
+    )
+    async def senddm(self, interaction: discord.Interaction, user: discord.Member, message: str) -> None:
+        """Send an owner-only custom DM to a member of the current guild."""
+        if interaction.user.id != LXGRF_USER_ID:
+            await interaction.response.send_message(
+                embed=Embed(title="Not Authorised", description="This command is restricted."),
+                ephemeral=True,
+            )
+            return
+
+        if not interaction.guild:
+            await interaction.response.send_message(
+                embed=Embed(title="No Guild Context", description="Run this command in a server."),
+                ephemeral=True,
+            )
+            return
+
+        clean_message = message.strip()
+        if not clean_message:
+            await interaction.response.send_message(
+                embed=Embed(title="Invalid Message", description="Message content cannot be empty."),
+                ephemeral=True,
+            )
+            return
+
+        if len(clean_message) > 2000:
+            await interaction.response.send_message(
+                embed=Embed(title="Message Too Long", description="Discord DMs support up to 2000 characters per message."),
+                ephemeral=True,
+            )
+            return
+
+        try:
+            await user.send(clean_message)
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                embed=Embed(
+                    title="DM Failed",
+                    description="I couldn't DM that user (their privacy settings may block DMs).",
+                ),
+                ephemeral=True,
+            )
+            return
+        except discord.HTTPException as exc:
+            logger.exception("Failed to send custom DM to user %s", user.id)
+            await interaction.response.send_message(
+                embed=Embed(title="DM Failed", description=f"Discord API error: {exc}"),
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            embed=Embed(title="DM Sent", description=f"Sent your message to {user.mention}."),
+            ephemeral=True,
+        )
+
 async def setup(bot: commands.Bot) -> None:  # pragma: no cover - discord entrypoint
     await bot.add_cog(Utility(bot))
