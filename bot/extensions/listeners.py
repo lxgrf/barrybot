@@ -176,10 +176,12 @@ class Listeners(commands.Cog):
                 'Afton',
                 'LX',
                 'Vyla',
+                'Zhvylathurgiesh-Moli',
                 'Cora',
                 'Lyra',
                 'Leif',
                 'Osovar',
+                'Barry',
             ]:
                 if _phrase_in_content(phrase):
                     try:
