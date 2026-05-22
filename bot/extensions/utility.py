@@ -153,5 +153,60 @@ class Utility(commands.Cog):
             ephemeral=True,
         )
 
+    @app_commands.command(name="sendmessage", description="Send a message in the current channel (lxgrf only).")
+    @app_commands.describe(message="Message content to send")
+    async def sendmessage(self, interaction: discord.Interaction, message: str) -> None:
+        """Send a plain message in the channel where the command is invoked."""
+        if interaction.user.id != LXGRF_USER_ID:
+            await interaction.response.send_message(
+                embed=Embed(title="Not Authorised", description="This command is restricted."),
+                ephemeral=True,
+            )
+            return
+
+        if not isinstance(interaction.channel, discord.TextChannel):
+            await interaction.response.send_message(
+                embed=Embed(title="Invalid Channel", description="This command must be run in a text channel."),
+                ephemeral=True,
+            )
+            return
+
+        clean_message = message.strip()
+        if not clean_message:
+            await interaction.response.send_message(
+                embed=Embed(title="Invalid Message", description="Message content cannot be empty."),
+                ephemeral=True,
+            )
+            return
+
+        if len(clean_message) > 2000:
+            await interaction.response.send_message(
+                embed=Embed(title="Message Too Long", description="Discord messages support up to 2000 characters."),
+                ephemeral=True,
+            )
+            return
+
+        try:
+            await interaction.channel.send(clean_message)
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                embed=Embed(title="Send Failed", description="I don't have permission to send messages in this channel."),
+                ephemeral=True,
+            )
+            return
+        except discord.HTTPException as exc:
+            logger.exception("Failed to send channel message in %s", interaction.channel.id)
+            await interaction.response.send_message(
+                embed=Embed(title="Send Failed", description=f"Discord API error: {exc}"),
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            embed=Embed(title="Message Sent", description="Your message was posted in this channel."),
+            ephemeral=True,
+        )
+
+
 async def setup(bot: commands.Bot) -> None:  # pragma: no cover - discord entrypoint
     await bot.add_cog(Utility(bot))
