@@ -277,5 +277,91 @@ class Activity(commands.Cog):
             await interaction.followup.send(embed=embed)
 
 
+    @app_commands.command(name="log", description="Audit who's been posting since the last Avrae message in this channel.")
+    async def log(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer(ephemeral=True)
+
+        DM_ROLE_ID = 881193159747600394
+        authorised = any(
+            role.name in config.authorised_roles or role.id == DM_ROLE_ID
+            for role in interaction.user.roles
+        )
+        if not authorised:
+            embed = _authorised_user()
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+
+        channel = interaction.channel
+        if not hasattr(channel, "history"):
+            await interaction.followup.send(
+                embed=Embed(title="Thread Log", description="This command must be run in a text channel."),
+                ephemeral=True,
+            )
+            return
+
+        raw_messages = []
+        avrae_found = False
+        async for message in channel.history(limit=500):
+            if message.author.name == "Avrae":
+                avrae_found = True
+                break
+            raw_messages.append(message)
+
+        if not raw_messages:
+            note = "No messages found since the last Avrae post." if avrae_found else "No messages found in this channel."
+            await interaction.followup.send(embed=Embed(title="Thread Log", description=note), ephemeral=True)
+            return
+
+        # Reverse to oldest-first so we can collapse consecutive same-author messages in order
+        raw_messages.reverse()
+
+        # Collapse consecutive runs by the same author into a single turn
+        turns = []  # (author_id, display_name, timestamp_of_most_recent_msg_in_run)
+        for msg in raw_messages:
+            if turns and turns[-1][0] == msg.author.id:
+                turns[-1] = (turns[-1][0], turns[-1][1], msg.created_at)
+            else:
+                turns.append((msg.author.id, msg.author.display_name, msg.created_at))
+
+        # Aggregate per-user stats; iterate turns in order (oldest first)
+        user_stats: dict[int, dict] = {}
+        for idx, (author_id, display_name, timestamp) in enumerate(turns):
+            if author_id not in user_stats:
+                user_stats[author_id] = {"name": display_name, "count": 0, "last_index": idx, "last_time": timestamp}
+            user_stats[author_id]["count"] += 1
+            user_stats[author_id]["last_index"] = idx
+            user_stats[author_id]["last_time"] = timestamp
+
+        total_turns = len(turns)
+        now = datetime.datetime.now(datetime.timezone.utc)
+
+        # Sort by turns since last post descending (most behind = first)
+        sorted_users = sorted(
+            user_stats.items(),
+            key=lambda kv: total_turns - kv[1]["last_index"] - 1,
+            reverse=True,
+        )
+
+        lines = []
+        for user_id, stats in sorted_users:
+            since_last = total_turns - stats["last_index"] - 1
+            delta = now - stats["last_time"]
+            if delta.days > 0:
+                time_str = f"{delta.days}d ago"
+            elif delta.seconds >= 3600:
+                time_str = f"{delta.seconds // 3600}h ago"
+            else:
+                time_str = f"{delta.seconds // 60}m ago"
+
+            lines.append(
+                f"<@{user_id}> — **{stats['count']}** turn(s) | last post {time_str} | **{since_last}** turn(s) since"
+            )
+
+        avrae_note = "" if avrae_found else "\n*No Avrae post found — showing up to the last 500 messages.*"
+        description = f"**{total_turns} total turn(s)** since last Avrae post{avrae_note}\n\n" + "\n".join(lines)
+        embed = Embed(title=f"Thread Log: #{channel.name}", description=description)
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Activity(bot))
