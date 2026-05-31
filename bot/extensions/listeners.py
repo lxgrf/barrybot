@@ -184,6 +184,8 @@ class Listeners(commands.Cog):
                 'Barry',
             ]:
                 if _phrase_in_content(phrase):
+                    if '"Revivify (Sarran)": 1' in message.content:
+                        continue
                     try:
                         target_user = await self.bot.fetch_user(661212031231459329)
                         alert_text = _build_alert_text()
