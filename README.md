@@ -1,13 +1,11 @@
 # Barry the Bot
 
-A Discord bot designed to enhance and manage roleplaying servers, with a focus on AI-powered tools and activity tracking.
+A Discord bot designed to enhance and manage roleplaying servers, with a focus on activity tracking and scene management.
 
 > **Note:** This bot has been migrated to discord.py 2.x with native slash command support. See `MIGRATION_NOTES.md` for technical details.
 
 ## Features
 
--   **AI-Powered Scene Summaries**: Generate "Too Long; Didn't Read" (TL;DR) summaries of roleplay scenes using the Anthropic Claude AI. This requires all participants to opt-in.
--   **AI-Powered Scene Prompts**: Get creative inspiration with D&D scene prompts for solo or two-character scenarios.
 -   **Activity Tracking**: Monitor user and channel activity to keep the community vibrant and engaging.
     -   Identify inactive users and channels.
     -   Generate helpful pings for stale roleplay scenes.
@@ -21,7 +19,7 @@ The bot is organised as a Python package with a clear separation between runtime
 -   **`main.py`**: The entry point that loads environment variables, builds the service container, and explicitly loads extensions from `bot/extensions`.
 -   **`config.py`**: Centralised server configuration covering monitored channels, role mappings, and thresholds.
 -   **`bot/`**: The main package housing production code.
-    -   `bot/extensions/`: Slash-command extensions and listeners (`activity.py`, `github_issues.py`, `listeners.py`, `prompts.py`, `summaries.py`).
+    -   `bot/extensions/`: Slash-command extensions and listeners (`activity.py`, `github_issues.py`, `listeners.py`, `summaries.py`, `contributions.py`, `utility.py`).
     -   `bot/services/`: Long-lived service objects such as the GitHub App client.
     -   `bot/core/`: Settings loading and service container wiring.
 
@@ -30,13 +28,7 @@ The bot is organised as a Python package with a clear separation between runtime
 Commands are grouped by their respective extensions.
 
 ### Summaries (`bot/extensions/summaries.py`)
--   `/tldr <start_message_id> <end_message_id> [scene_title]`: Summarises a roleplay scene.
 -   `/export [start_message_id] [end_message_id]`: Exports a scene to a `.txt` file.
-
-### Prompts (`bot/extensions/prompts.py`)
--   `/scene <character_one_details> <character_two_details> [request]`: Generates a scene prompt for two characters.
--   `/solo <character_details> [request]`: Generates a scene prompt for a single character.
--   `/help`: Displays help information for the AI prompt commands.
 
 ### Activity (`bot/extensions/activity.py`)
 -   `/useractivity`: Displays a report of user posting activity in monitored roleplay channels (authorised users only).
@@ -49,7 +41,6 @@ Commands are grouped by their respective extensions.
 ## Technologies Used
 
 -   [discord.py](https://github.com/Rapptz/discord.py) (v2.x with native slash commands)
--   [Anthropic API](https://www.anthropic.com/): Powers the AI summarisation and prompt generation features.
 
 ## Setup and Installation
 
@@ -69,7 +60,6 @@ Commands are grouped by their respective extensions.
     Create a file named `.env` in the root directory and add your bot's tokens:
     ```
     discord=YOUR_DISCORD_BOT_TOKEN
-    anthropic=YOUR_ANTHROPIC_API_KEY
     ```
 
 4.  **Run the bot:**

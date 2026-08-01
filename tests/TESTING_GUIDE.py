@@ -114,14 +114,11 @@ THREE APPROACHES TO COG TESTING:
    - Use Discord's developer portal for testing
    
    Test Checklist Example:
-   ✓ /scene with valid characters -> returns prompt
-   ✓ /scene with short names -> warns user
-   ✓ /scene on non-enabled server -> shows error
    ✓ /useractivity as admin -> shows report
    ✓ /useractivity as regular user -> denied
-   ✓ /tldr with valid messages -> creates summary
-   ✓ /tldr with invalid IDs -> shows error
-   
+   ✓ /export with valid messages -> sends transcript
+   ✓ /export with invalid IDs -> shows error
+
    Verdict: RECOMMENDED NOW
    - Easiest to implement immediately
    - Catches UI/UX issues that unit tests miss
@@ -206,8 +203,8 @@ IF YOU WANT TO EXPAND TESTING, START HERE:
    # Easy to test with various scenarios!
 
 3. Test Role Checking Logic
-   Already extracted: _ai_enabled_server ✅
-   Good example of testable extraction!
+   See config.authorised_roles usage in activity.py for an example
+   of logic that could be extracted into a testable pure function.
 
 4. Test Regex Patterns
    Current location: listeners.py (inline)

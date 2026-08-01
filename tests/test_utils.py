@@ -5,9 +5,7 @@ import sys
 
 # Mock modules before importing utils
 discord_mock = MagicMock()
-anthropic_mock = MagicMock()
 sys.modules['discord'] = discord_mock
-sys.modules['anthropic'] = anthropic_mock
 
 # Create a real Embed class for testing
 class MockEmbed:
@@ -20,7 +18,7 @@ discord_mock.Embed = MockEmbed
 
 # Now we can import
 import config
-from utils import _server_error, _authorised_user, _ai_enabled_server, get_recent_messages_reversed
+from utils import _server_error, _authorised_user, get_recent_messages_reversed
 
 
 class TestServerError:
@@ -53,32 +51,6 @@ class TestAuthorisedUser:
         assert result.title == "Error - User not authorised."
         assert "restricted to authorised users" in result.description
         assert "@lxgrf" in result.description
-
-
-class TestAIEnabledServer:
-    """Tests for _ai_enabled_server function."""
-    
-    def test_ai_enabled_server_with_enabled_server(self):
-        """Test that AI-enabled servers return True."""
-        # Test with known enabled servers from config
-        for guild_id in config.ai_enabled_servers:
-            result = _ai_enabled_server(int(guild_id))
-            assert result is True, f"Guild {guild_id} should be AI-enabled"
-    
-    def test_ai_enabled_server_with_disabled_server(self):
-        """Test that non-enabled servers return False."""
-        # Use a guild ID that's definitely not in the list
-        fake_guild_id = 999999999999999999
-        result = _ai_enabled_server(fake_guild_id)
-        assert result is False
-    
-    def test_ai_enabled_server_with_string_id(self):
-        """Test that string guild IDs work correctly."""
-        # config.ai_enabled_servers contains string IDs
-        if config.ai_enabled_servers:
-            test_id = config.ai_enabled_servers[0]
-            result = _ai_enabled_server(test_id)
-            assert result is True
 
 
 class TestGetRecentMessagesReversed:

@@ -14,7 +14,6 @@ sys.modules['discord'] = MagicMock()
 sys.modules['discord.ext'] = MagicMock()
 sys.modules['discord.ext.commands'] = MagicMock()
 sys.modules['discord.app_commands'] = MagicMock()
-sys.modules['anthropic'] = MagicMock()
 
 
 @pytest.mark.skip(reason="Example test - requires extensive mocking")
@@ -45,10 +44,6 @@ class TestExtensionStructure:
     def test_activity_extension_exists(self):
         """Test that activity extension file exists."""
         assert os.path.exists('./bot/extensions/activity.py')
-    
-    def test_prompts_extension_exists(self):
-        """Test that prompts extension file exists."""
-        assert os.path.exists('./bot/extensions/prompts.py')
     
     def test_summaries_extension_exists(self):
         """Test that summaries extension file exists."""

@@ -5,12 +5,6 @@ guilds ={
     "1197643287423627264":"The city of Bellegorn, in a homebrew fantasy world",
          }
 
-ai_guilds={
-    "1114617197931790376":"a fantasy city", # Test Server
-    "866376531995918346":"the city of Silverymoon, in Faerûn",
-    "1001193835835183174":"the city of Caddocia, in a homebrew fantasy world",
-}
-
 # User filtering
 include_role = ["Member","Player"]
 exclude_role = ["Inactive", "Break Player"]
@@ -18,12 +12,6 @@ inactivity_threshold = 31 # days
 warning_threshold = 14 # days
 
 authorised_roles = ["Helper","Dragonspeaker","Mods","Admin","Owner","Staff"]
-
-opt_in_roles = {
-    866376531995918346 : "AI Scene Summary Permission", # Silverymoon
-    1001193835835183174: "AI Approval", # Caddocia
-    1114617197931790376: "Owner", # Test Server
-}
 
 monitored_channels = {
     866376531995918346 : [ # Silverymoon
@@ -71,26 +59,6 @@ monitored_channels = {
                         1251546068085243914,1250112564671807579
                           ],
             }
-    
-tldr_excluded_channels = {
-    866376531995918346:[], #Silverymoon
-    1114617197931790376: [], #Test Server
-    1001193835835183174: [1044715490544734278,1044717853754019890,1044715531430797372], #Caddocia
-}
-
-tldr_additional_channels = {
-    866376531995918346:[923663727394443284,990336609192906822,926378655091945482,1079463185712697464,1158841934345945248,990765159687532554,
-                        990320570233159740,929174188651085824,1039271164696084550,1023774505006542919,928093443706724352,928093568424349717,
-                        928120536859557928,1084512254147448902,948024606512521297], #Silverymoon
-    1114617197931790376: [], #Test Server
-    1001193835835183174: [1087062242056474765,1034466115037962311,1115703983256899615,1185359232229453834,922383749281382400,1090358867797475348,], #Caddocia
-}
-
-tldr_output_channels = {
-    866376531995918346: 1031234608458641408, #Silverymoon
-    1114617197931790376: 0, #Test Server
-    1001193835835183174: 1237521328244789299, #Caddocia
-}
 
 channeltimes = {
     866376531995918346 : {"yellow":7,"red":14}, # Silverymoon

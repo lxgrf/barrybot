@@ -22,20 +22,6 @@ class TestConfigStructure:
             assert isinstance(description, str), f"Guild description should be a string"
 
 
-class TestAIGuilds:
-    """Tests for AI guilds configuration."""
-    
-    def test_ai_guilds_dict_exists(self):
-        """Test that ai_guilds dictionary is defined."""
-        assert hasattr(config, 'ai_guilds')
-        assert isinstance(config.ai_guilds, dict)
-    
-    def test_ai_guilds_subset_of_guilds(self):
-        """Test that all AI guilds are in the guilds list."""
-        for guild_id in config.ai_guilds.keys():
-            assert guild_id in config.guilds, f"AI guild {guild_id} should be in guilds list"
-
-
 class TestUserRoles:
     """Tests for user role configuration."""
     
@@ -145,36 +131,3 @@ class TestAIEnabledServers:
         """Test that all AI enabled server IDs are strings."""
         for server_id in config.ai_enabled_servers:
             assert isinstance(server_id, str), f"Server ID {server_id} should be a string"
-
-
-class TestOptInRoles:
-    """Tests for opt-in roles configuration."""
-    
-    def test_opt_in_roles_dict_exists(self):
-        """Test that opt_in_roles dictionary is defined."""
-        assert hasattr(config, 'opt_in_roles')
-        assert isinstance(config.opt_in_roles, dict)
-    
-    def test_opt_in_roles_values_are_strings(self):
-        """Test that all opt-in role names are strings."""
-        for guild_id, role_name in config.opt_in_roles.items():
-            assert isinstance(role_name, str), f"Role name for guild {guild_id} should be a string"
-
-
-class TestTLDRConfiguration:
-    """Tests for TLDR-related configuration."""
-    
-    def test_tldr_output_channels_dict_exists(self):
-        """Test that tldr_output_channels dictionary is defined."""
-        assert hasattr(config, 'tldr_output_channels')
-        assert isinstance(config.tldr_output_channels, dict)
-    
-    def test_tldr_excluded_channels_dict_exists(self):
-        """Test that tldr_excluded_channels dictionary is defined."""
-        assert hasattr(config, 'tldr_excluded_channels')
-        assert isinstance(config.tldr_excluded_channels, dict)
-    
-    def test_tldr_additional_channels_dict_exists(self):
-        """Test that tldr_additional_channels dictionary is defined."""
-        assert hasattr(config, 'tldr_additional_channels')
-        assert isinstance(config.tldr_additional_channels, dict)

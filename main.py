@@ -20,7 +20,6 @@ EXTENSIONS = [
     "bot.extensions.contributions",
     "bot.extensions.github_issues",
     "bot.extensions.listeners",
-    "bot.extensions.prompts",
     "bot.extensions.summaries",
     "bot.extensions.utility",
 ]
