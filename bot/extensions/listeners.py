@@ -182,6 +182,7 @@ class Listeners(commands.Cog):
                 'Leif',
                 'Osovar',
                 'Barry',
+                'Voss',
             ]:
                 if _phrase_in_content(phrase):
                     if '"Revivify (Sarran)": 1' in message.content:
